@@ -3,6 +3,8 @@ bc125csv
 
 Channel import and export tool for the Uniden BC125AT, UBC125XLT and UBC126AT.
 
+[![Build Status](https://travis-ci.org/fdev/bc125csv.svg)](https://travis-ci.org/fdev/bc125csv)
+
 Introduction
 ------------
 bc125csv provides a simple command-line interface for importing and 
