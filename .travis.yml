@@ -1,5 +1,6 @@
 language: python
 python:
+# Just these two versions for now
   - "2.7"
   - "3.4"
 install:
