@@ -40,7 +40,7 @@ Installation
 On most UNIX-like systems, you can install bc125csv by running one of the 
 following install commands with root privileges.
 
-``` sh
+```
 git clone git://github.com/fdev/bc125csv.git
 cd bc125csv
 python setup.py install
@@ -48,7 +48,7 @@ python setup.py install
 
 *or*
 
-``` sh
+```
 pip install git+http://github.com/fdev/bc125csv
 ```
 
@@ -61,7 +61,7 @@ parts that require a physical device to be attached are skipped.
 
 To run the tests, you can run the following command:
 
-```sh
+```
 nosetests --with-coverage --cover-package=bc125csv
 ```
 
@@ -129,7 +129,7 @@ option. Any 'no' and 'none' values in the CTCSS/DCS, Lockout and
 Priority columns can be omitted by using the `--sparse` option.
 
 
-```csv
+```
 Channel,Name,Frequency,Modulation,CTCSS/DCS,Delay,Lockout,Priority
 
 # Bank 1
@@ -196,7 +196,7 @@ and UBC126AT.
 License (MIT)
 -------------
 
-Copyright (c) 2015, Folkert de Vries <bc125csv@fdev.nl>
+Copyright (c) 2015, Folkert de Vries
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
