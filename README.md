@@ -56,8 +56,9 @@ pip install git+http://github.com/fdev/bc125csv
 Tests
 -----
 
-This application aims to cover 100% of its code, though some parts that require
-a physical device to be attached are skipped.
+This application aims to cover 100% of its code with tests, though some 
+parts that require a physical device to be attached are skipped. 
+
 To run the tests, you can run the following command:
 
 ```sh

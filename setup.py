@@ -1,10 +1,12 @@
-import os
-from setuptools import setup, find_packages
+from setuptools import setup
 
 description = "Channel import and export tool for the BC125AT, UBC125XLT and UBC126AT."
-cur_dir = os.path.dirname(__file__)
 try:
-	long_description = open(os.path.join(cur_dir, "README.md")).read()
+	# Convert from Markdown to reStructuredText (supported by PyPi).
+	import os
+	import pypandoc
+	readme = os.path.join(os.path.dirname(__file__), "README.md")
+	long_description = pypandoc.convert(readme, 'rst')
 except:
 	long_description = description
 
@@ -12,6 +14,7 @@ setup(
 	name = "bc125csv",
 	version = "1.0.0",
 	url = "http://github.com/fdev/bc125csv/",
+	download_url = "http://github.com/fdev/bc125csv/tarball/master",
 	license = "MIT",
 	description = description,
 	long_description = long_description,
