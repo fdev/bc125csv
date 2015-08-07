@@ -83,14 +83,7 @@ class Importer(object):
 		if value in (-10, -5, 0, 1, 2, 3, 4, 5):
 			return value
 
-	def parse_lockout(self, value):
-		value = value.lower()
-		if value in ("0", "no", "false"):
-			return False
-		elif value in ("1", "yes", "true"):
-			return True
-
-	def parse_priority(self, value):
+	def parse_flag(self, value):
 		value = value.lower()
 		if value in ("0", "no", "false"):
 			return False
@@ -140,7 +133,7 @@ class Importer(object):
 
 		# Lockout
 		if len(data) > 6 and data[6]:
-			lockout = self.parse_lockout(data[6])
+			lockout = self.parse_flag(data[6])
 			if lockout is None:
 				raise ParseError("Invalid lockout %s." % data[6])
 		else:
@@ -148,7 +141,7 @@ class Importer(object):
 
 		# Priority
 		if len(data) > 7 and data[7]:
-			priority = self.parse_priority(data[7])
+			priority = self.parse_flag(data[7])
 			if priority is None:
 				raise ParseError("Invalid priority %s." % data[7])
 		else:
