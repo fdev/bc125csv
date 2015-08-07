@@ -22,6 +22,10 @@ class Importer(object):
 	RE_DCS = re.compile(r"^(?:dcs)?\s*(\d{2,3})$", re.I)
 	RE_FREQ = re.compile(r"^(\d{1,4})(\s{0}\.\d+)?\s*(?:mhz)?$", re.I)
 
+	def __init__(self, fh):
+		self.csvreader = csv.reader(fh)
+
+
 	def parse_tq(self, value):
 		"""Parse a user-defined CTCSS tone or DCS code."""
 		if value in ("", "none", "all"):
@@ -137,18 +141,16 @@ class Importer(object):
 			"priority":   priority,
 		})
 
-	def read(self, fh):
+	def print_error(self, line, err):
+		print("Error on line %d: %s" % (line, err), file=sys.stderr)
+
+	def read(self):
 		# Parsed channels
 		channels = {}
 		# Number of encountered errors
 		errors = 0
 
-		def print_error(line, err):
-			print("Error on line %d: %s" % (line, err), file=sys.stderr)
-		
-		# Read csv from fileobject
-		csvreader = csv.reader(fh)
-		for row, data in enumerate(csvreader):
+		for row, data in enumerate(self.csvreader):
 			# Skip first row (header)
 			if not row:
 				continue
@@ -171,12 +173,12 @@ class Importer(object):
 			try:
 				channel = self.parse_row(data)
 			except ParseError as err:
-				print_error(row + 1, err)
+				self.print_error(row + 1, err)
 				errors += 1
 				continue
 
 			if channel.index in channels:
-				print_error(row + 1, "Channel %d was seen before." % \
+				self.print_error(row + 1, "Channel %d was seen before." % \
 					channel.index)
 				errors += 1
 				continue

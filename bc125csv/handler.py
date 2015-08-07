@@ -4,7 +4,7 @@ import os
 import sys
 import argparse
 
-from bc125csv.scanner import Scanner, ScannerStub, DeviceLookup, SUPPORTED_MODELS
+from bc125csv.scanner import Scanner, VirtualScanner, DeviceLookup, SUPPORTED_MODELS
 from bc125csv.importer import Importer
 from bc125csv.exporter import Exporter
 
@@ -172,18 +172,33 @@ def main(args=None):
 		if params.verbose:
 			print(*args, file=sys.stderr)
 
-	# Verify command
-	if params.command == "verify":
-		# Import from file instead of stdin
+
+	# Verify input file
+	if params.command in ("verify", "import"):
+		# Read from file instead of stdin
 		if params.input and params.input != "-":
 			if not os.path.isfile(params.input):
 				sys.exit("Input file does not exist.")
 			fh = open(params.input, "r")
 		else:
 			fh = sys.stdin
+	
+	# Verify output file
+	elif params.command == "export":
+		# Write to file instead of stdout
+		if params.output and params.output != "-":
+			try:
+				fh = open(params.output, "w")
+			except:
+				sys.exit("Could not open output file for writing.")
+		else:
+			fh = sys.stdout
 
-		importer = Importer()
-		channels = importer.read(fh)
+
+	# Verify command
+	if params.command == "verify":
+		importer = Importer(fh)
+		channels = importer.read()
 
 		if channels is None:
 			sys.exit("\nThere are errors in your csv data.")
@@ -191,10 +206,10 @@ def main(args=None):
 		print_verbose("No errors found.")
 		sys.exit()
 
-	# Virtual scanner requested, use a scanner stub
+	# Virtual scanner requested
 	if params.noscanner:
 		print_verbose("Using virtual scanner device.")
-		scanner = ScannerStub()
+		scanner = VirtualScanner()
 
 	# Look for a compatible device
 	else: # pragma: no cover
@@ -229,7 +244,7 @@ def main(args=None):
 
 	# Shell command
 	if params.command == "shell":
-		if isinstance(scanner, ScannerStub):
+		if isinstance(scanner, VirtualScanner):
 			print("Not all commands are emulated by the virtual scanner device.", 
 				file=sys.stderr)
 
@@ -263,16 +278,9 @@ def main(args=None):
 
 	# Import command
 	if params.command == "import":
-		# Import from file instead of stdin
-		if params.input and params.input != "-":
-			if not os.path.isfile(params.input):
-				sys.exit("Input file does not exist.")
-			fh = open(params.input, "r")
-		else:
-			fh = sys.stdin
+		importer = Importer(fh)
+		channels = importer.read()
 
-		importer = Importer()
-		channels = importer.read(fh)
 		if channels is None:
 			sys.exit("\nThere are errors in your csv data.")
 
@@ -301,15 +309,6 @@ def main(args=None):
 
 	# Export command
 	if params.command == "export":
-		# Export to file instead of stdout
-		if params.output and params.output != "-":
-			try:
-				fh = open(params.output, "w")
-			except:
-				sys.exit("Could not open output file for writing.")
-		else:
-			fh = sys.stdout
-
 		print_verbose("Entering programming mode")
 		scanner.enter_programming()
 
@@ -328,5 +327,5 @@ def main(args=None):
 		print_verbose("Leaving programming mode")
 		scanner.exit_programming()
 
-		exporter = Exporter()
-		exporter.write(channels, fh, params.sparse)
+		exporter = Exporter(fh, params.sparse)
+		exporter.write(channels)

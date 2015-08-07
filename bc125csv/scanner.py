@@ -88,7 +88,7 @@ class ScannerException(Exception):
 	pass
 
 
-class Scanner(serial.Serial): # pragma: no cover
+class Scanner(serial.Serial):
 	"""
 	Wrap around Serial to provide compatible readline.
 	"""
@@ -111,7 +111,7 @@ class Scanner(serial.Serial): # pragma: no cover
 	def __init__(self, port, baudrate=9600): # pragma: no cover
 		super(Scanner, self).__init__(port=port, baudrate=baudrate)
 
-	def writeread(self, command):
+	def writeread(self, command): # pragma: no cover
 		self.write(command + "\r")
 		self.flush()
 		return self.readline()
@@ -121,7 +121,7 @@ class Scanner(serial.Serial): # pragma: no cover
 		if not re.match(r"(^ERR|,NG$)", result):
 			return result
 
-	def readline(self):
+	def readline(self): # pragma: no cover
 		"""Readline that returns on carriage return as eol."""
 		line = ""
 		while True:
@@ -194,7 +194,8 @@ class Scanner(serial.Serial): # pragma: no cover
 		]))
 
 		# Write to scanner
-		if not self.send(command):
+		result = self.send(command)
+		if not result or result != "CIN,OK":
 			raise ScannerException("Could not write to channel %d." % channel.index)
 
 	def delete_channel(self, index):
@@ -204,13 +205,14 @@ class Scanner(serial.Serial): # pragma: no cover
 		# Only delete if channel has data
 		# Unnecessary deletes are slow
 		if channel:
-			if not self.send("DCH,%d" % index):
+			result = self.send("DCH,%d" % index)
+			if not result or result != "DCH,OK":
 				raise ScannerException("Could not delete channel %d." % index)
 
 
-class ScannerStub(Scanner):
+class VirtualScanner(Scanner):
 	"""
-	Stub scanner to test without an actual scanner.
+	Virtual scanner to test without an actual scanner.
 	"""
 	def __init__(self, *args, **kwargs):
 		# Don"t create a Serial object

@@ -7,16 +7,12 @@ class Exporter(object):
 	"""
 	Convert channel objects to CSV data and write to file object.
 	"""
-
-	def write(self, channels, fh, sparse=False):
-		csvwriter = csv.writer(fh, lineterminator="\n")
+	def __init__(self, fh, sparse=False):
+		self.sparse = sparse
+		self.csvwriter = csv.writer(fh, lineterminator="\n")
 		
-		# Helper function
-		def write(row=None):
-			csvwriter.writerow(row or [])
-
-		# Header
-		write([
+		# Write header
+		self.writerow([
 			"Channel",
 			"Name",
 			"Frequency",
@@ -26,7 +22,11 @@ class Exporter(object):
 			"Lockout",
 			"Priority",
 		])
-		
+
+	def writerow(self, row=None):
+		self.csvwriter.writerow(row or [])
+
+	def write(self, channels):
 		# Iterate over all banks
 		for bank in range(1, 11):
 			bankheader = False
@@ -36,46 +36,37 @@ class Exporter(object):
 					continue
 
 				if not bankheader:
-					write()
-					write(["# Bank %d" % bank])
+					self.writerow()
+					self.writerow(["# Bank %d" % bank])
 					bankheader = True
 
 				channel = channels[index]
 
 				if not channel:
-					write([index])
+					self.writerow([index])
 					continue
 
 				if channel.lockout:
 					lockout = "yes"
-				elif sparse:
+				elif self.sparse:
 					lockout = ""
 				else:
 					lockout = "no"
 
 				if channel.priority:
 					priority = "yes"
-				elif sparse:
+				elif self.sparse:
 					priority = ""
 				else:
 					priority = "no"
 
-				write([
-					# Channel
+				self.writerow([
 					channel.index,
-					# Name
 					channel.name,
-					# Frequency
 					channel.frequency,
-					# Modulation
 					channel.modulation,
-					# CTCSS/DCS
-					"" if channel.tqcode == 0 and sparse else channel.tq,
-					# Delay
+					"" if channel.tqcode == 0 and self.sparse else channel.tq,
 					channel.delay,
-					# Lockout
 					lockout,
-					# Priority
 					priority,
 				])
-
