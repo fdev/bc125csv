@@ -4,6 +4,9 @@ bc125csv
 Channel import and export tool for the Uniden BC125AT, UBC125XLT and UBC126AT.
 
 [![Build Status](https://travis-ci.org/fdev/bc125csv.svg)](https://travis-ci.org/fdev/bc125csv)
+[![Code Climate](https://codeclimate.com/github/fdev/bc125csv/badges/gpa.svg)](https://codeclimate.com/github/fdev/bc125csv)
+[![Code Health](https://landscape.io/github/fdev/bc125csv/master/landscape.svg?style=flat)](https://landscape.io/github/fdev/bc125csv/master)
+
 
 Introduction
 ------------
