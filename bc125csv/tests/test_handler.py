@@ -91,15 +91,15 @@ class HandlerTestCase(BaseTestCase):
 				main(["shell", "-n"])
 			self.assertEqual(cm.exception.code, None)
 
-ERROR_LINES = """Error on line 5: Invalid name Wrong chars~~~.
-Error on line 8: Invalid frequency 100.999x.
-Error on line 9: Invalid frequency -100.000.
-Error on line 11: Invalid modulation XM.
-Error on line 13: Invalid CTCSS/DCS error.
-Error on line 15: Invalid delay 99.
-Error on line 16: Invalid delay error.
-Error on line 19: Invalid lockout error.
-Error on line 21: Invalid priority error.
-Error on line 24: Invalid channel error.
-Error on line 25: Invalid channel 1000.
+ERROR_LINES = """Error on line 5: Invalid name: Wrong chars~~~.
+Error on line 8: Invalid frequency: 100.999x.
+Error on line 9: Invalid frequency: -100.000.
+Error on line 11: Invalid modulation: XM.
+Error on line 13: Invalid CTCSS/DCS: error.
+Error on line 15: Invalid delay: 99.
+Error on line 16: Invalid delay: error.
+Error on line 19: Invalid lockout: error.
+Error on line 21: Invalid priority: error.
+Error on line 24: Invalid index: error.
+Error on line 25: Invalid index: 1000.
 Error on line 26: Channel 1 was seen before."""
