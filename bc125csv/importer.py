@@ -25,6 +25,33 @@ class Importer(object):
 	def __init__(self, fh):
 		self.csvreader = csv.reader(fh)
 
+	def parse_index(self, value):
+		try:
+			index = int(value)
+		except ValueError:
+			return
+
+		if index in range(1, 501):
+			return index
+
+	def parse_name(self, value):
+		valid = string.ascii_letters + string.digits + "!@#$%&*()-/<>.? "
+		if all(ch in valid for ch in value):
+			return value
+
+	def parse_frequency(self, value):
+		"""Converts user-entered frequency to nn.mmmm string format."""
+		match = self.RE_FREQ.match(value)
+		if match:
+			return ".".join((
+				match.group(1).lstrip("0"),
+				(match.group(2) or "")[:5].lstrip(".").ljust(4, "0")
+			))
+
+	def parse_modulation(self, value):
+		value = value.upper()
+		if value in ("FM", "AM", "AUTO", "NFM"):
+			return value
 
 	def parse_tq(self, value):
 		"""Parse a user-defined CTCSS tone or DCS code."""
@@ -47,42 +74,51 @@ class Importer(object):
 			if dcs in DCS_CODES:
 				return DCS_CODES.index(dcs) + 128
 
-	def parse_frequency(self, value):
-		"""Converts user-entered frequency to nn.mmmm string format."""
-		match = self.RE_FREQ.match(value)
-		if match:
-			return ".".join((
-				match.group(1).lstrip("0"),
-				(match.group(2) or "")[:5].lstrip(".").ljust(4, "0")
-			))
+	def parse_delay(self, value):
+		try:
+			value = int(value)
+		except ValueError:
+			return
+
+		if value in (-10, -5, 0, 1, 2, 3, 4, 5):
+			return value
+
+	def parse_lockout(self, value):
+		value = value.lower()
+		if value in ("0", "no", "false"):
+			return False
+		elif value in ("1", "yes", "true"):
+			return True
+
+	def parse_priority(self, value):
+		value = value.lower()
+		if value in ("0", "no", "false"):
+			return False
+		elif value in ("1", "yes", "true"):
+			return True
 
 	def parse_row(self, data):
 		"""Parse a csv row to a channel object."""
 		# Channel index
-		try:
-			index = int(data[0])
-		except ValueError:
+		index = self.parse_index(data[0])
+		if index is None:
 			raise ParseError("Invalid channel %s." % data[0])
 
-		if index not in range(1, 501):
-			raise ParseError("Invalid channel %d." % index)
-
 		# Name
-		valid = string.ascii_letters + string.digits + "!@#$%&*()-/<>.? "
-		name = data[1]
-		if not all(ch in valid for ch in name):
-			raise ParseError("Invalid name %s." % name)
+		name = self.parse_name(data[1])
+		if name is None:
+			raise ParseError("Invalid name %s." % data[1])
 
 		# Frequency
 		frequency = self.parse_frequency(data[2])
-		if not frequency:
+		if frequency is None:
 			raise ParseError("Invalid frequency %s." % data[2])
 
 		# Modulation
 		if len(data) > 3 and data[3]:
-			modulation = data[3].upper()
-			if modulation not in ("FM", "AM", "AUTO", "NFM"):
-				raise ParseError("Invalid modulation %s." % modulation)
+			modulation = self.parse_modulation(data[3])
+			if modulation is None:
+				raise ParseError("Invalid modulation %s." % data[3])
 		else:
 			modulation = "AUTO"
 
@@ -96,37 +132,25 @@ class Importer(object):
 
 		# Delay
 		if len(data) > 5 and data[5]:
-			try:
-				delay = int(data[5])
-			except ValueError:
+			delay = self.parse_delay(data[5])
+			if delay is None:
 				raise ParseError("Invalid delay %s." % data[5])
-
-			if delay not in (-10, -5, 0, 1, 2, 3, 4, 5):
-				raise ParseError("Invalid delay %d." % delay)
 		else:
 			delay = 2
 
 		# Lockout
 		if len(data) > 6 and data[6]:
-			lockout = data[6].lower()
-			if lockout in ("0", "no", "false"):
-				lockout = False
-			elif lockout in ("1", "yes", "true"):
-				lockout = True
-			else:
-				raise ParseError("Invalid lockout %s." % lockout)
+			lockout = self.parse_lockout(data[6])
+			if lockout is None:
+				raise ParseError("Invalid lockout %s." % data[6])
 		else:
 			lockout = False
 
 		# Priority
 		if len(data) > 7 and data[7]:
-			priority = data[7].lower()
-			if priority in ("0", "no", "false"):
-				priority = False
-			elif priority in ("1", "yes", "true"):
-				priority = True
-			else:
-				raise ParseError("Invalid priority %s." % priority)
+			priority = self.parse_priority(data[7])
+			if priority is None:
+				raise ParseError("Invalid priority %s." % data[7])
 		else:
 			priority = False
 
