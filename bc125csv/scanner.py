@@ -90,7 +90,7 @@ class ScannerException(Exception):
 
 class Scanner(serial.Serial):
 	"""
-	Wrap around Serial to provide compatible readline.
+	Wrap around Serial to provide compatible readline and helper methods.
 	"""
 	
 	RE_CIN = re.compile(r"""
@@ -114,15 +114,19 @@ class Scanner(serial.Serial):
 	def writeread(self, command): # pragma: no cover
 		self.write(command + "\r")
 		self.flush()
-		return self.readline()
+		return self.readlinecr()
 
 	def send(self, command):
 		result = self.writeread(command)
 		if not re.match(r"(^ERR|,NG$)", result):
 			return result
 
-	def readline(self): # pragma: no cover
-		"""Readline that returns on carriage return as eol."""
+	def readlinecr(self): # pragma: no cover
+		"""
+		The Serial class might be based on serial.FileLike, which allows
+		one to override the eol character, and io.RawIOBase, which doesn't.
+		To ensure this possibility, the readline method is overriden.
+		"""
 		line = ""
 		while True:
 			c = self.read(1)
