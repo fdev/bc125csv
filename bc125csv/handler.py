@@ -4,7 +4,8 @@ import os
 import sys
 import argparse
 
-from bc125csv.scanner import Scanner, VirtualScanner, DeviceLookup, SUPPORTED_MODELS
+from bc125csv.scanner import Scanner, ScannerException, VirtualScanner, \
+	DeviceLookup, SUPPORTED_MODELS
 from bc125csv.importer import Importer
 from bc125csv.exporter import Exporter
 
@@ -212,7 +213,7 @@ class Handler(object):
 
 			try:
 				model = scanner.get_model()
-			except:
+			except ScannerException:
 				sys.exit("Could not get model name from scanner.\n" 
 					"Please try again or reconnect your device.")
 
@@ -233,7 +234,7 @@ class Handler(object):
 		if self.params.output and self.params.output != "-":
 			try:
 				return open(self.params.output, "w")
-			except:
+			except IOError:
 				sys.exit("Could not open output file for writing.")
 		return sys.stdout
 

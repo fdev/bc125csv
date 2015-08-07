@@ -61,7 +61,7 @@ class Importer(object):
 		# Channel index
 		try:
 			index = int(data[0])
-		except:
+		except ValueError:
 			raise ParseError("Invalid channel %s." % data[0])
 
 		if index not in range(1, 501):
@@ -98,7 +98,7 @@ class Importer(object):
 		if len(data) > 5 and data[5]:
 			try:
 				delay = int(data[5])
-			except:
+			except ValueError:
 				raise ParseError("Invalid delay %s." % data[5])
 
 			if delay not in (-10, -5, 0, 1, 2, 3, 4, 5):
