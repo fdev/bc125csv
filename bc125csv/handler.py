@@ -115,135 +115,168 @@ echo -en "PRG\\nBLT,AO\\nEPG" | %(prog)s shell
 """
 
 
-def create_parser():
-	"""Create an argument parser."""
-
-	# Full control over the usage output
-	class Usage(argparse.HelpFormatter):
-		def format_help(self):
-			return USAGE % dict(prog=self._prog)
-
-	# Parse arguments passed by user
-	parser = argparse.ArgumentParser(formatter_class=Usage)
-	parser.add_argument("command", nargs="?", 
-		choices=("verify", "import", "export", "shell", "help"))
-	parser.add_argument("-b", "--banks", type=int, dest="banks", nargs="+",
-		choices=range(1,11), default=range(1,11))
-	parser.add_argument("-e", "--include-empty", action="store_true", 
-		dest="empty")
-	parser.add_argument("-i", "--input", dest="input")
-	parser.add_argument("-n", "--no-scanner", action="store_true", 
-		dest="noscanner")
-	parser.add_argument("-o", "--output", dest="output")
-	parser.add_argument("-r", "--rate", type=int, dest="rate",
-		choices=(4800, 9600, 19200, 38400, 57600, 115200), default=9600)
-	parser.add_argument("-s", "--sparse", action="store_true", dest="sparse")
-	parser.add_argument("-v", "--verbose", action="store_true", dest="verbose")
-	parser.add_argument("-V", "--version", action="store_true", dest="version")
-
-	return parser
-
-def main(args=None):
+class Handler(object):
 	"""
 	Handle a command call.
 
 	Arguments are taken from sys.stdin unless a list of arguments is given.
 	"""
-	parser = create_parser()
-	params = parser.parse_args(args)
+	def __init__(self, args=None):
+		self.parser = self.create_parser()
+		self.params = self.parser.parse_args(args)
 
-	# Output version string
-	if params.version:
-		print(VERSION)
-		sys.exit()
 
-	# No command given, print usage
-	if not params.command:
-		parser.print_usage()
-		sys.exit()
+	def create_parser(self):
+		"""Create an argument parser."""
 
-	# Output detailed help
-	if params.command == "help":
-		print(HELP % dict(prog=parser.prog))
-		sys.exit()
+		# Full control over the usage output
+		class Usage(argparse.HelpFormatter):
+			def format_help(self):
+				return USAGE % dict(prog=self._prog)
 
-	# Helper function: only print with raised verbosity level
-	def print_verbose(*args):
-		if params.verbose:
+		# Parse arguments passed by user
+		parser = argparse.ArgumentParser(formatter_class=Usage)
+		parser.add_argument("command", nargs="?", 
+			choices=("verify", "import", "export", "shell", "help"))
+		parser.add_argument("-b", "--banks", type=int, dest="banks", nargs="+",
+			choices=range(1,11), default=range(1,11))
+		parser.add_argument("-e", "--include-empty", action="store_true", 
+			dest="empty")
+		parser.add_argument("-i", "--input", dest="input")
+		parser.add_argument("-n", "--no-scanner", action="store_true", 
+			dest="noscanner")
+		parser.add_argument("-o", "--output", dest="output")
+		parser.add_argument("-r", "--rate", type=int, dest="rate",
+			choices=(4800, 9600, 19200, 38400, 57600, 115200), default=9600)
+		parser.add_argument("-s", "--sparse", action="store_true", 
+			dest="sparse")
+		parser.add_argument("-v", "--verbose", action="store_true", 
+			dest="verbose")
+		parser.add_argument("-V", "--version", action="store_true", 
+			dest="version")
+
+		return parser
+
+
+	def handle(self):
+		if self.params.version:
+			return self.print_version()
+		
+		# No command given
+		if not self.params.command:
+			return self.print_usage()
+
+		if self.params.command == "help":
+			return self.command_help()
+
+		if self.params.command == "verify":
+			return self.command_verify()
+		
+		if self.params.command == "shell":
+			return self.command_shell()
+		
+		if self.params.command == "import":
+			return self.command_import()
+
+		if self.params.command == "export":
+			return self.command_export()
+
+
+	def get_scanner(self):
+		# Virtual scanner requested
+		if self.params.noscanner:
+			self.print_verbose("Using virtual scanner device.")
+			return VirtualScanner()
+
+		else: # pragma: no cover
+			# Look for a compatible device
+			self.print_verbose("Searching for compatible devices...")
+
+			lookup = DeviceLookup()
+			device = lookup.get_device()
+
+			if not device:
+				sys.exit("No compatible scanner was found.")
+
+			if not lookup.is_tty(device):
+				sys.exit("Found a compatible scanner, but no serial tty.\n"
+					"Please run the following commands with root privileges:\n"
+					"modprobe usbserial vendor=0x{0} product=0x{1}"
+					.format(device.get("ID_VENDOR_ID"), device.get("ID_MODEL_ID")))
+
+			# Make sure device is writable by current user
+			if not os.access(device.get("DEVNAME", ""), os.W_OK):
+				sys.exit("Found a compatible scanner, but can not write to it.")
+
+			scanner = Scanner(device.get("DEVNAME"), self.params.rate)
+
+			try:
+				model = scanner.get_model()
+			except:
+				sys.exit("Could not get model name from scanner.\n" 
+					"Please try again or reconnect your device.")
+
+			self.print_verbose("Found scanner", model)
+
+
+	def get_input_handle(self):
+		# Read from file instead of stdin
+		if self.params.input and self.params.input != "-":
+			if not os.path.isfile(self.params.input):
+				sys.exit("Input file does not exist.")
+			return open(self.params.input, "r")
+		return sys.stdin
+
+
+	def get_output_handle(self):
+		# Write to file instead of stdout
+		if self.params.output and self.params.output != "-":
+			try:
+				return open(self.params.output, "w")
+			except:
+				sys.exit("Could not open output file for writing.")
+		return sys.stdout
+
+
+	def print_verbose(self, *args):
+		"""Helper function: only print with raised verbosity level."""
+		if self.params.verbose:
 			print(*args, file=sys.stderr)
 
 
-	# Verify input file
-	if params.command in ("verify", "import"):
-		# Read from file instead of stdin
-		if params.input and params.input != "-":
-			if not os.path.isfile(params.input):
-				sys.exit("Input file does not exist.")
-			fh = open(params.input, "r")
-		else:
-			fh = sys.stdin
-	
-	# Verify output file
-	elif params.command == "export":
-		# Write to file instead of stdout
-		if params.output and params.output != "-":
-			try:
-				fh = open(params.output, "w")
-			except:
-				sys.exit("Could not open output file for writing.")
-		else:
-			fh = sys.stdout
+	def print_version(self):
+		"""Output application version."""
+		print(VERSION)
+		sys.exit()
 
 
-	# Verify command
-	if params.command == "verify":
+	def print_usage(self):
+		"""Output command usage."""
+		self.parser.print_usage()
+		sys.exit()
+
+
+	def command_help(self):
+		"""Output detailed help."""
+		print(HELP % dict(prog=self.parser.prog))
+		sys.exit()
+
+
+	def command_verify(self):
+		fh = self.get_input_handle()
 		importer = Importer(fh)
 		channels = importer.read()
 
 		if channels is None:
 			sys.exit("\nThere are errors in your csv data.")
 
-		print_verbose("No errors found.")
+		self.print_verbose("No errors found.")
 		sys.exit()
 
-	# Virtual scanner requested
-	if params.noscanner:
-		print_verbose("Using virtual scanner device.")
-		scanner = VirtualScanner()
 
-	# Look for a compatible device
-	else: # pragma: no cover
-		print_verbose("Searching for compatible devices...")
+	def command_shell(self):
+		scanner = self.get_scanner()
 
-		lookup = DeviceLookup()
-		device = lookup.get_device()
-
-		if not device:
-			sys.exit("No compatible scanner was found.")
-
-		if not lookup.is_tty(device):
-			sys.exit("Found a compatible scanner, but no serial tty.\n"
-				"Please run the following commands with root privileges:\n"
-				"modprobe usbserial vendor=0x{0} product=0x{1}"
-				.format(device.get("ID_VENDOR_ID"), device.get("ID_MODEL_ID")))
-
-		# Make sure device is writable by current user
-		if not os.access(device.get("DEVNAME", ""), os.W_OK):
-			sys.exit("Found a compatible scanner, but can not write to it.")
-
-		scanner = Scanner(device.get("DEVNAME"), params.rate)
-
-		try:
-			model = scanner.get_model()
-		except:
-			sys.exit("Could not get model name from scanner.\n" 
-				"Please try again or reconnect your device.")
-
-		print_verbose("Found scanner", model)
-
-
-	# Shell command
-	if params.command == "shell":
 		if isinstance(scanner, VirtualScanner):
 			print("Not all commands are emulated by the virtual scanner device.", 
 				file=sys.stderr)
@@ -259,7 +292,7 @@ def main(args=None):
 			sys.exit()
 
 		# Enter interactive shell
-		print_verbose("Starting interactive shell")
+		self.print_verbose("Starting interactive shell")
 		get_input = input
 
 		# Use raw_input() in Python 2
@@ -276,8 +309,11 @@ def main(args=None):
 		print("")
 		sys.exit()
 
-	# Import command
-	if params.command == "import":
+
+	def command_import(self):
+		scanner = self.get_scanner()
+		fh = self.get_input_handle()
+
 		importer = Importer(fh)
 		channels = importer.read()
 
@@ -288,44 +324,55 @@ def main(args=None):
 			if any(channel.modulation == "NFM" for channel in channels.values()):
 				sys.exit("NFM modulation is not supported on your device.")
 
-		print_verbose("Entering programming mode")
+		self.print_verbose("Entering programming mode")
 		scanner.enter_programming()
 
-		print_verbose("Importing into banks:", " ".join(map(str, params.banks)))
+		self.print_verbose("Importing into banks:", 
+			" ".join(map(str, self.params.banks)))
 
-		for bank in params.banks:
+		for bank in self.params.banks:
 			for index in range(bank * 50 - 49, bank * 50 + 1):
 				if index in channels:
 					channel = channels[index]
-					print_verbose("Writing channel %d" % index)
+					self.print_verbose("Writing channel %d" % index)
 					scanner.set_channel(channel)
 				else:
-					print_verbose("Deleting channel %d" % index)
+					self.print_verbose("Deleting channel %d" % index)
 					scanner.delete_channel(index)
 
-		print_verbose("Leaving programming mode")
+		self.print_verbose("Leaving programming mode")
 		scanner.exit_programming()
 
 
-	# Export command
-	if params.command == "export":
-		print_verbose("Entering programming mode")
+	def command_export(self):
+		scanner = self.get_scanner()
+		fh = self.get_output_handle()
+
+		self.print_verbose("Entering programming mode")
 		scanner.enter_programming()
 
-		print_verbose("Exporting banks:", " ".join(map(str, params.banks)))
+		self.print_verbose("Exporting banks:", 
+			" ".join(map(str, self.params.banks)))
 
 		# Get channels from device
 		channels = {}
-		for bank in params.banks:
+		for bank in self.params.banks:
 			for index in range(bank * 50 - 49, bank * 50 + 1):
-				print_verbose("Reading channel %d" % index)
+				self.print_verbose("Reading channel %d" % index)
 
 				channel = scanner.get_channel(index)
-				if channel or params.empty:
+				if channel or self.params.empty:
 					channels[index] = channel
 
-		print_verbose("Leaving programming mode")
+		self.print_verbose("Leaving programming mode")
 		scanner.exit_programming()
 
-		exporter = Exporter(fh, params.sparse)
+		exporter = Exporter(fh, self.params.sparse)
 		exporter.write(channels)
+
+
+
+def main(args=None):
+	"""Exposed function for setup.py console script."""
+	handler = Handler(args)
+	handler.handle()
