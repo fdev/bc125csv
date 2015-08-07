@@ -17,3 +17,6 @@ __date__ = "Aug 02, 2015"
 
 # Expose main function for setup.py console_scripts
 from bc125csv.handler import main
+
+if __name__ == "__main__":
+	main()
