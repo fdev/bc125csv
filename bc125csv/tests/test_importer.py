@@ -3,39 +3,39 @@ from bc125csv.tests.base import BaseTestCase, PseudoTTY, StringIO, mock, builtin
 
 
 class ImporterTestCase(BaseTestCase):
-	def test_import(self):
-		"""
-		Normal import into bank 1.
-		"""
-		with mock.patch("os.path.isfile", return_value=True):
-			with mock.patch.object(builtins, 'open', return_value=StringIO(IMPORT)):
-				main(["import", "-n", "-b", "1", "-i", "import.csv"])
+    def test_import(self):
+        """
+        Normal import into bank 1.
+        """
+        with mock.patch("os.path.isfile", return_value=True):
+            with mock.patch.object(builtins, 'open', return_value=StringIO(IMPORT)):
+                main(["import", "-n", "-b", "1", "-i", "import.csv"])
 
-	def test_import_errors(self):
-		"""
-		Invalid import into bank 2.
-		"""
-		with mock.patch("os.path.isfile", return_value=True):
-			with mock.patch.object(builtins, 'open', return_value=StringIO(IMPORT_ERRORS)):
-				with self.assertRaises(SystemExit) as cm:
-					main(["import", "-n", "-b", "2", "-i", "import_errors.csv"])
-				self.assertNotEqual(cm.exception.code, None)
+    def test_import_errors(self):
+        """
+        Invalid import into bank 2.
+        """
+        with mock.patch("os.path.isfile", return_value=True):
+            with mock.patch.object(builtins, 'open', return_value=StringIO(IMPORT_ERRORS)):
+                with self.assertRaises(SystemExit) as cm:
+                    main(["import", "-n", "-b", "2", "-i", "import_errors.csv"])
+                self.assertNotEqual(cm.exception.code, None)
 
-	def test_import_nofile(self):
-		"""
-		Non-existing file import.
-		"""
-		with mock.patch("os.path.isfile", return_value=False):
-			with self.assertRaises(SystemExit) as cm:
-				main(["import", "-n", "-i", "doesnotexist.csv"])
-			self.assertNotEqual(cm.exception.code, None)
+    def test_import_nofile(self):
+        """
+        Non-existing file import.
+        """
+        with mock.patch("os.path.isfile", return_value=False):
+            with self.assertRaises(SystemExit) as cm:
+                main(["import", "-n", "-i", "doesnotexist.csv"])
+            self.assertNotEqual(cm.exception.code, None)
 
-	def test_import_stdin(self):
-		"""
-		Import from stdin.
-		"""
-		with mock.patch("sys.stdin", StringIO(IMPORT)):
-			main(["import", "-n"])
+    def test_import_stdin(self):
+        """
+        Import from stdin.
+        """
+        with mock.patch("sys.stdin", StringIO(IMPORT)):
+            main(["import", "-n"])
 
 IMPORT = """Channel,Name,Frequency,Modulation,CTCSS/DCS,Delay,Lockout,Priority
 #Channel,Name,Frequency,Modulation,CTCSS/DCS,Delay,Lockout,Priority
@@ -94,4 +94,5 @@ IMPORT_ERRORS = """Channel,Name,Frequency,Modulation,CTCSS/DCS,Delay,Lockout,Pri
 error,Channel name,100.0000
 1000,Channel name,100.0000
 1,Duplicate index,100.0000
+10,,100.0000
 """

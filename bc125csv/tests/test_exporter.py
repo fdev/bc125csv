@@ -3,52 +3,52 @@ from bc125csv.tests.base import BaseTestCase, mock, builtins
 
 
 class ExporterTestCase(BaseTestCase):
-	def test_export(self):
-		"""
-		Normal export of all channels.
-		"""
-		main(["export", "-n"])
-		self.assertStdOut(EXPORT)
+    def test_export(self):
+        """
+        Normal export of all channels.
+        """
+        main(["export", "-n"])
+        self.assertStdOut(EXPORT)
 
-	def test_export_sparse(self):
-		"""
-		Sparse export of all channels.
-		"""
-		main(["export", "-n", "-s"])
-		self.assertStdOut(EXPORT_SPARSE)
+    def test_export_sparse(self):
+        """
+        Sparse export of all channels.
+        """
+        main(["export", "-n", "-s"])
+        self.assertStdOut(EXPORT_SPARSE)
 
-	def test_export_sparse_bank2(self):
-		"""
-		Sparse export of bank 2.
-		"""
-		main(["export", "-n", "-s", "-b", "2"])
-		self.assertStdOut(EXPORT_BANK2)
+    def test_export_sparse_bank2(self):
+        """
+        Sparse export of bank 2.
+        """
+        main(["export", "-n", "-s", "-b", "2"])
+        self.assertStdOut(EXPORT_BANK2)
 
-	def test_export_sparse_bank2_empty(self):
-		"""
-		Sparse export of bank 2 including empty channels.
-		"""
-		main(["export", "-n", "-s", "-b", "2", "-e"])
-		self.assertStdOut(EXPORT_BANK2_EMPTY)
+    def test_export_sparse_bank2_empty(self):
+        """
+        Sparse export of bank 2 including empty channels.
+        """
+        main(["export", "-n", "-s", "-b", "2", "-e"])
+        self.assertStdOut(EXPORT_BANK2_EMPTY)
 
-	def test_export_bank13(self):
-		"""
-		Export of bank 13 (non-existing).
-		"""
-		with self.assertRaises(SystemExit) as cm:
-			main(["export", "-n", "-b", "13"])
-		self.assertNotEqual(cm.exception.code, None)
+    def test_export_bank13(self):
+        """
+        Export of bank 13 (non-existing).
+        """
+        with self.assertRaises(SystemExit) as cm:
+            main(["export", "-n", "-b", "13"])
+        self.assertNotEqual(cm.exception.code, None)
 
-	def test_export_outfile(self):
-		"""
-		Write export to file.
-		"""
-		with mock.patch.object(builtins, "open", mock.mock_open()):
-			main(["export", "-n", "-s", "-o", "output.csv"])
+    def test_export_outfile(self):
+        """
+        Write export to file.
+        """
+        with mock.patch.object(builtins, "open", mock.mock_open()):
+            main(["export", "-n", "-s", "-o", "output.csv"])
 
-		with self.assertRaises(SystemExit) as cm:
-			main(["export", "-n", "-s", "-o", "/path/that/does/not/exist/output.csv"])
-		self.assertNotEqual(cm.exception.code, None)
+        with self.assertRaises(SystemExit) as cm:
+            main(["export", "-n", "-s", "-o", "/path/that/does/not/exist/output.csv"])
+        self.assertNotEqual(cm.exception.code, None)
 
 
 
