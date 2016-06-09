@@ -187,6 +187,10 @@ class Importer(object):
             if not data[0] or data[0].startswith("#"):
                 continue
 
+            # Empty frequency
+            if not data[2]:
+                continue
+
             try:
                 channel = self.parse_row(data)
             except ParseError as err:
