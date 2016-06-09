@@ -88,7 +88,7 @@ class ScannerException(Exception):
     pass
 
 
-class Scanner(serial.Serial):
+class Scanner(serial.Serial, object):
     """
     Wrap around Serial to provide compatible readline and helper methods.
     """
