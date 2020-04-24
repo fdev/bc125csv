@@ -14,10 +14,10 @@ from bc125csv.scanner import (
 from bc125csv.importer import Importer
 from bc125csv.exporter import Exporter
 
-VERSION = "bc125csv version 1.0.1 Released Jun 09, 2016"
+VERSION = "bc125csv version 1.0.2 Released Apr 24, 2020"
 USAGE = VERSION + """
 
-Copyright (c) 2016, fdev.nl. All rights reserved.
+Copyright (c) 2020, fdev.nl. All rights reserved.
 Released under the MIT license.
 
 Uniden and Bearcat are registered trademarks of Uniden 

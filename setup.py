@@ -12,7 +12,7 @@ except:
 
 setup(
 	name = "bc125csv",
-	version = "1.0.1",
+	version = "1.0.2",
 	url = "http://github.com/fdev/bc125csv/",
 	download_url = "http://github.com/fdev/bc125csv/tarball/master",
 	license = "MIT",
