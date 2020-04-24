@@ -1,8 +1,9 @@
 language: python
 python:
-# Just these two versions for now
+# Just these versions for now
   - "2.7"
   - "3.4"
+  - "3.7"
 install:
   - python setup.py install
 # Install coverage for nosetests

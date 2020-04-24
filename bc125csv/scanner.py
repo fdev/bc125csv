@@ -112,7 +112,7 @@ class Scanner(serial.Serial, object):
         super(Scanner, self).__init__(port=port, baudrate=baudrate)
 
     def writeread(self, command): # pragma: no cover
-        self.write(command + "\r")
+        self.write((command + "\r").encode())
         self.flush()
         return self.readlinecr()
 
@@ -129,7 +129,7 @@ class Scanner(serial.Serial, object):
         """
         line = ""
         while True:
-            c = self.read(1)
+            c = self.read(1).decode()
             if c == "\r":
                 return line
             line += c
