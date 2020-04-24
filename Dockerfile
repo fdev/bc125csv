@@ -8,6 +8,6 @@ RUN apt update && \
 	apt full-upgrade -y && \
 	apt install -y git python3-pip
 
-RUN pip3 install git+https://github.com/MyTheValentinus/bc125csv
+RUN pip3 install git+http://github.com/fdev/bc125csv
 
 ENTRYPOINT ["bc125csv"]
