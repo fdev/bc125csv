@@ -189,6 +189,13 @@ carriage return to each command it sends to the scanner. There's no need to
 include a carriage return yourself.
 
 
+Docker
+-------------
+
+If u want you can use docker image:
+`docker run -it --device=/dev/ttyUSB0 -v ~/Downloads/uniden.csv:/data/uniden.csv mythevalentinus/bc125csv verify -i /data/uniden.csv`
+
+
 Compatibility
 -------------
 
