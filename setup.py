@@ -21,7 +21,7 @@ setup(
 	author = "Folkert de Vries",
 	author_email = "bc125csv@fdev.nl",
 	packages = ["bc125csv"],
-	install_requires = ["pyudev", "pyserial"],
+	install_requires = ["pyserial"],
 	entry_points="""
 	[console_scripts]
 	bc125csv = bc125csv:main

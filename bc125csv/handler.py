@@ -153,7 +153,7 @@ class Handler(object):
             dest="noscanner")
         parser.add_argument("-o", "--output", dest="output")
         parser.add_argument("-r", "--rate", type=int, dest="rate",
-            choices=(4800, 9600, 19200, 38400, 57600, 115200), default=9600)
+            choices=(4800, 9600, 19200, 38400, 57600, 115200))
         parser.add_argument("-s", "--sparse", action="store_true", 
             dest="sparse")
         parser.add_argument("-v", "--verbose", action="store_true", 
@@ -204,23 +204,25 @@ class Handler(object):
             if not device:
                 sys.exit("No compatible scanner was found.")
 
-            if not lookup.is_tty(device):
-                sys.exit("Found a compatible scanner, but no serial tty.\n"
-                    "Please run the following commands with root privileges:\n"
-                    "modprobe usbserial vendor=0x{0} product=0x{1}"
-                    .format(device.get("ID_VENDOR_ID"), device.get("ID_MODEL_ID")))
-
             # Make sure device is writable by current user
-            if not os.access(device.get("DEVNAME", ""), os.W_OK):
+            if not os.access(device["port"], os.W_OK):
                 sys.exit("Found a compatible scanner, but can not write to it.")
 
-            scanner = Scanner(device.get("DEVNAME"), self.params.rate)
+            # the baud rate can be overriden
+            baudrate = self.params.rate
+            if baudrate:
+                device["baudrate"] = baudrate
+
+            scanner = Scanner(device)
 
             try:
                 model = scanner.get_model()
             except ScannerException:
                 sys.exit("Could not get model name from scanner.\n" 
                     "Please try again or reconnect your device.")
+
+            if not model in SUPPORTED_MODELS:
+                sys.exit("Got unsupported model: ", model)
 
             self.print_verbose("Found scanner", model)
 
