@@ -1,6 +1,6 @@
 from setuptools import setup
 
-description = "Channel import and export tool for the BC125AT, UBC125XLT and UBC126AT."
+description = "Channel import and export tool for the BC125AT, UBC125XLT, UBC126AT, and SR30C."
 try:
 	# Convert from Markdown to reStructuredText (supported by PyPi).
 	import os

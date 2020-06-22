@@ -1,7 +1,7 @@
 bc125csv
 =============
 
-Channel import and export tool for the Uniden BC125AT, UBC125XLT and UBC126AT.
+Channel import and export tool for the Uniden BC125AT, UBC125XLT, UBC126AT, and SR30C.
 
 [![Build Status](https://travis-ci.org/fdev/bc125csv.svg)](https://travis-ci.org/fdev/bc125csv)
 [![Code Climate](https://codeclimate.com/github/fdev/bc125csv/badges/gpa.svg)](https://codeclimate.com/github/fdev/bc125csv)
@@ -28,7 +28,6 @@ Requirements
 ------------
 
 * Python 2.7+ or 3.4+
-* [pyudev](https://pyudev.readthedocs.org/)
 * [pySerial](http://pyserial.sourceforge.net/)
 
 Both pyudev and pySerial will be automatically installed on installation.
@@ -192,8 +191,13 @@ include a carriage return yourself.
 Compatibility
 -------------
 
-This application is compatible with the Uniden Bearcat models BC125AT, UBC125XLT
-and UBC126AT.
+This application is compatible with the Uniden Bearcat models BC125AT, UBC125XLT,
+UBC126AT, and SR30C.
+
+Note: the SR30C uses a stock UART serial USB chipset (specifically, the CP2104).
+Linux kernel v2.6.12+ appears to have the driver, but in other operating systems
+it may be necessary to get drivers from the manufacturer:
+https://www.silabs.com/products/development-tools/software/usb-to-uart-bridge-vcp-drivers
 
 
 License (MIT)
