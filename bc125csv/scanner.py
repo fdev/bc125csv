@@ -42,7 +42,7 @@ DCS_CODES = [
     "732","734","743","754",
 ]
 
-SUPPORTED_MODELS = ("BC125AT", "UBC125XLT", "UBC126AT")
+SUPPORTED_MODELS = ("BC125AT", "UBC125XLT", "UBC126AT", "SR30C")
 
 
 class Channel(object):
@@ -100,8 +100,8 @@ class Scanner(serial.Serial, object):
         (?P<index>\d{1,3}),
         (?P<name>[^,]{0,16}),
         (?P<freq>\d{5,8}), # 4 decimals, so at least 5 digits
-        (?P<modulation>AUTO|AM|FM|NFM),
-        (?P<tq>\d{1,3}),
+        (?P<modulation>|AUTO|AM|FM|NFM),
+        (?P<tq>\d{0,3}),
         (?P<delay>-10|-5|0|1|2|3|4|5),
         (?P<lockout>0|1),
         (?P<priority>0|1) # no comma!
@@ -177,7 +177,7 @@ class Scanner(serial.Serial, object):
             "name":       data["name"].strip(),
             "frequency":  frequency,
             "modulation": data["modulation"],
-            "tqcode":     int(data["tq"]),
+            "tqcode":     int(data["tq"] or "0"),
             "delay":      int(data["delay"]),
             "lockout":    data["lockout"] == "1",
             "priority":   data["priority"] == "1",
