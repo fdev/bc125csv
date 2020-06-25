@@ -206,7 +206,10 @@ class Scanner(serial.Serial, object):
         if channel:
             result = self.send("DCH,%d" % index)
             if not result or result != "DCH,OK":
-                raise ScannerException("Could not delete channel %d." % index)
+                # Fall back to zeroing out the channel
+                result = self.send("CIN,%d,,00000000,,,0,1,0" % index)
+                if not result or result != "CIN,OK":
+                    raise ScannerException("Could not delete channel %d." % index)
 
 
 class VirtualScanner(Scanner):
