@@ -5,13 +5,8 @@ import re
 import sys
 
 try:
-    import pyudev
-except ImportError: # pragma: no cover
-    sys.exit("Failed to import pyudev (https://pyudev.readthedocs.org/):,"
-        " install using:\n  pip install pyudev")
-
-try:
     import serial
+    from serial.tools.list_ports import comports
 except ImportError: # pragma: no cover
     sys.exit("Failed to import pyserial (http://pyserial.sourceforge.net/),"
         " install using:\n  pip install pyserial")
@@ -42,7 +37,7 @@ DCS_CODES = [
     "732","734","743","754",
 ]
 
-SUPPORTED_MODELS = ("BC125AT", "UBC125XLT", "UBC126AT")
+SUPPORTED_MODELS = ("BC125AT", "UBC125XLT", "UBC126AT", "SR30C")
 
 
 class Channel(object):
@@ -100,16 +95,16 @@ class Scanner(serial.Serial, object):
         (?P<index>\d{1,3}),
         (?P<name>[^,]{0,16}),
         (?P<freq>\d{5,8}), # 4 decimals, so at least 5 digits
-        (?P<modulation>AUTO|AM|FM|NFM),
-        (?P<tq>\d{1,3}),
+        (?P<modulation>|AUTO|AM|FM|NFM),
+        (?P<tq>\d{0,3}),
         (?P<delay>-10|-5|0|1|2|3|4|5),
         (?P<lockout>0|1),
         (?P<priority>0|1) # no comma!
         $ # No characters after
         """, flags=re.VERBOSE)
 
-    def __init__(self, port, baudrate=9600): # pragma: no cover
-        super(Scanner, self).__init__(port=port, baudrate=baudrate)
+    def __init__(self, device): # pragma: no cover
+        super(Scanner, self).__init__(**device)
 
     def writeread(self, command): # pragma: no cover
         self.write((command + "\r").encode())
@@ -177,7 +172,7 @@ class Scanner(serial.Serial, object):
             "name":       data["name"].strip(),
             "frequency":  frequency,
             "modulation": data["modulation"],
-            "tqcode":     int(data["tq"]),
+            "tqcode":     int(data["tq"] or "0"),
             "delay":      int(data["delay"]),
             "lockout":    data["lockout"] == "1",
             "priority":   data["priority"] == "1",
@@ -211,7 +206,10 @@ class Scanner(serial.Serial, object):
         if channel:
             result = self.send("DCH,%d" % index)
             if not result or result != "DCH,OK":
-                raise ScannerException("Could not delete channel %d." % index)
+                # Fall back to zeroing out the channel
+                result = self.send("CIN,%d,,00000000,,,0,1,0" % index)
+                if not result or result != "CIN,OK":
+                    raise ScannerException("Could not delete channel %d." % index)
 
 
 class VirtualScanner(Scanner):
@@ -267,29 +265,26 @@ class DeviceLookup(object): # pragma: no cover
     """
 
     def __init__(self):
-        self.context = pyudev.Context()
+        self.device = self._search_devices()
 
-    def is_scanner(self, device):
-        """Given USB device is a compatible scanner."""
-        return device.get("ID_VENDOR_ID") == "1965" and \
-            device.get("ID_MODEL") in SUPPORTED_MODELS
-
-    def is_tty(self, device):
-        """Given USB device is a serial tty."""
-        return device.get("SUBSYSTEM") == "tty"
+    def _search_devices(self):
+        """
+        Find compatible scanner and return usb device. Returns arguments for Serial constructor.
+        """
+        ports = comports(include_links=False)
+        for port in ports:
+            # Uniden Vendor
+            if port.vid == 6501 and port.product in SUPPORTED_MODELS:
+                return {
+                    "port": port.device,
+                    "baudrate": 9600
+                }
+            # Silicon Laboratories Vendor (SR30C uses this chipset for its USB controller):
+            if port.vid == 4292 and port.pid == 60000:
+                return {
+                    "port": port.device,
+                    "baudrate": 57600
+                }
 
     def get_device(self):
-        """Find compatible scanner and return usb device.
-
-        If found a tty device will be returned, otherwise the
-        usb device will be returned.
-        """
-        # Look for scanner tty
-        for device in self.context.list_devices():
-            if self.is_scanner(device) and self.is_tty(device):
-                return device
-
-        # No scanner with tty, look for scanner
-        for device in self.context.list_devices():
-            if self.is_scanner(device):
-                return device
+        return self.device
