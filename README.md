@@ -1,5 +1,4 @@
-bc125csv
-=============
+# bc125csv
 
 Channel import and export tool for the Uniden BC125AT, UBC125XLT and UBC126AT.
 
@@ -7,40 +6,34 @@ Channel import and export tool for the Uniden BC125AT, UBC125XLT and UBC126AT.
 [![Code Climate](https://codeclimate.com/github/fdev/bc125csv/badges/gpa.svg)](https://codeclimate.com/github/fdev/bc125csv)
 [![Code Health](https://landscape.io/github/fdev/bc125csv/master/landscape.svg?style=flat)](https://landscape.io/github/fdev/bc125csv/master)
 
+## Introduction
 
-Introduction
-------------
-bc125csv provides a simple command-line interface for importing and 
+bc125csv provides a simple command-line interface for importing and
 exporting the channels on your Uniden Bearcat scanner in CSV file format.
 
-This application is not intended to provide full control of *all* features on
+This application is not intended to provide full control of _all_ features on
 your scanner; if you want to turn off the backlight in your scanner, just turn
-the knob and press some buttons. This application *does* however aim to lessen
-the amount of work needed for entering channels considerably, especially for 
+the knob and press some buttons. This application _does_ however aim to lessen
+the amount of work needed for entering channels considerably, especially for
 those on Linux or UNIX-like systems.
-
 
 If you do feel the need to change the backlight setting on your scanner using
 the command-line, the shell action will allow you to do so (see [Examples](#examples)).
 
+## Requirements
 
-Requirements
-------------
-
-* Python 2.7+ or 3.4+
-* [pyudev](https://pyudev.readthedocs.org/)
-* [pySerial](http://pyserial.sourceforge.net/)
+- Python 3.6+
+- [pyudev](https://pyudev.readthedocs.org/)
+- [pySerial](http://pyserial.sourceforge.net/)
 
 Both pyudev and pySerial will be automatically installed on installation.
 
 You can use this application without a connected scanner by enabling the virtual
 scanner device using the `--no-scanner` option.
 
+## Installation
 
-Installation
-------------
-
-On most UNIX-like systems, you can install bc125csv by running one of the 
+On most UNIX-like systems, you can install bc125csv by running one of the
 following install commands with root privileges.
 
 ```
@@ -49,18 +42,16 @@ cd bc125csv
 python setup.py install
 ```
 
-*or*
+_or_
 
 ```
 pip install git+http://github.com/fdev/bc125csv
 ```
 
+## Tests
 
-Tests
------
-
-This application aims to cover 100% of its code with tests, though some 
-parts that require a physical device to be attached are skipped. 
+This application aims to cover 100% of its code with tests, though some
+parts that require a physical device to be attached are skipped.
 
 To run the tests, you can run the following command:
 
@@ -70,9 +61,7 @@ nosetests --with-coverage --cover-package=bc125csv
 
 Continuous integration is done by Travis.
 
-
-Usage
------
+## Usage
 
 ```
 Usage: bc125csv ACTION [OPTIONS]
@@ -97,40 +86,39 @@ Available actions are:
   help    - Display detailed help.
 ```
 
-
-Examples
---------
+## Examples
 
 **Exporting banks 1, 2 and 3**
+
 ```
 bc125csv export -s -b 1 2 3 > banks-123.csv
 ```
 
 **Importing from csv file**
+
 ```
 bc125csv import < channels.csv
 ```
 
 **Verify a csv file**
+
 ```
 bc125csv verify -v -i channels.csv
 ```
 
 **Enable backlight using the shell**
+
 ```
 echo -en "PRG\nBLT,AO\nEPG" | bc125csv shell
 ```
 
-
-Export format
--------------
+## Export format
 
 The export format is a comma separated values file with header,
 comments and empty lines to improve readability. Empty channels
-are omitted by default, but can be included using the `--include-empty` 
-option. Any 'no' and 'none' values in the CTCSS/DCS, Lockout and 
+are omitted by default, but can be included using the `--include-empty`
+option. Any 'no' and 'none' values in the CTCSS/DCS, Lockout and
 Priority columns can be omitted by using the `--sparse` option.
-
 
 ```
 Channel,Name,Frequency,Modulation,CTCSS/DCS,Delay,Lockout,Priority
@@ -146,25 +134,22 @@ Channel,Name,Frequency,Modulation,CTCSS/DCS,Delay,Lockout,Priority
 56,Hot Air Balloons,122.2500,AM,none,2,no,no
 ```
 
-
-Import format
--------------
+## Import format
 
 The import format is the same as the export format, but forgiving:
 
- * CTCSS/DCS, Delay, Lockout and Priority values may be left empty,
- * no, false, 0 and <empty> may be used interchangeably,
- * yes, true and 1 may be used interchangeably,
- * CTCSS tones may be written as 114.8, 114.8Hz, CTCSS 114.8 Hz, etc,
- * DCS codes may be written as 26, 026, DCS026, DCS 026,
- * lines beginning with a `#` (comment line) or `,` (no channel) and 
-   the first line (containing the header) are ignored,
- * additional columns are ignored,
- * frequencies are automatically rounded down to 4 decimal places.
+- CTCSS/DCS, Delay, Lockout and Priority values may be left empty,
+- no, false, 0 and <empty> may be used interchangeably,
+- yes, true and 1 may be used interchangeably,
+- CTCSS tones may be written as 114.8, 114.8Hz, CTCSS 114.8 Hz, etc,
+- DCS codes may be written as 26, 026, DCS026, DCS 026,
+- lines beginning with a `#` (comment line) or `,` (no channel) and
+  the first line (containing the header) are ignored,
+- additional columns are ignored,
+- frequencies are automatically rounded down to 4 decimal places.
 
+## Shell
 
-Shell
------
 You can start an interactive shell to send commands to your scanner.
 See the [BC125AT Operation Specification][proto] for all available commands.
 
@@ -188,16 +173,12 @@ be terminated by a carriage return. This application automatically appends the
 carriage return to each command it sends to the scanner. There's no need to
 include a carriage return yourself.
 
-
-Compatibility
--------------
+## Compatibility
 
 This application is compatible with the Uniden Bearcat models BC125AT, UBC125XLT
 and UBC126AT.
 
-
-License (MIT)
--------------
+## License (MIT)
 
 Copyright (c) 2020, Folkert de Vries <bc125csv@fdev.nl>
 
@@ -219,13 +200,10 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
+## Disclaimer
 
-Disclaimer
-----------
-
-Uniden® and Bearcat® are registered trademarks of Uniden America Corporation. 
+Uniden® and Bearcat® are registered trademarks of Uniden America Corporation.
 This application and its author are not affiliated with or endorsed by Uniden
 in any way.
-
 
 [proto]: http://info.uniden.com/twiki/pub/UnidenMan4/BC125AT/BC125AT_Protocol.pdf

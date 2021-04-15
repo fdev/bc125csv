@@ -1,5 +1,9 @@
+from unittest import mock
+import builtins
+from io import StringIO
+
 from bc125csv import main
-from bc125csv.tests.base import BaseTestCase, PseudoTTY, StringIO, mock, builtins
+from bc125csv.tests.base import BaseTestCase
 
 
 class ImporterTestCase(BaseTestCase):
@@ -8,7 +12,9 @@ class ImporterTestCase(BaseTestCase):
         Normal import into bank 1.
         """
         with mock.patch("os.path.isfile", return_value=True):
-            with mock.patch.object(builtins, 'open', return_value=StringIO(IMPORT)):
+            with mock.patch.object(
+                builtins, "open", return_value=StringIO(IMPORT)
+            ):
                 main(["import", "-n", "-b", "1", "-i", "import.csv"])
 
     def test_import_errors(self):
@@ -16,9 +22,13 @@ class ImporterTestCase(BaseTestCase):
         Invalid import into bank 2.
         """
         with mock.patch("os.path.isfile", return_value=True):
-            with mock.patch.object(builtins, 'open', return_value=StringIO(IMPORT_ERRORS)):
+            with mock.patch.object(
+                builtins, "open", return_value=StringIO(IMPORT_ERRORS)
+            ):
                 with self.assertRaises(SystemExit) as cm:
-                    main(["import", "-n", "-b", "2", "-i", "import_errors.csv"])
+                    main(
+                        ["import", "-n", "-b", "2", "-i", "import_errors.csv"]
+                    )
                 self.assertNotEqual(cm.exception.code, None)
 
     def test_import_nofile(self):
@@ -36,6 +46,7 @@ class ImporterTestCase(BaseTestCase):
         """
         with mock.patch("sys.stdin", StringIO(IMPORT)):
             main(["import", "-n"])
+
 
 IMPORT = """Channel,Name,Frequency,Modulation,CTCSS/DCS,Delay,Lockout,Priority
 #Channel,Name,Frequency,Modulation,CTCSS/DCS,Delay,Lockout,Priority

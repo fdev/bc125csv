@@ -1,28 +1,7 @@
 import sys
+import unittest
+from io import StringIO
 
-try:
-    import unittest2 as unittest
-except ImportError:
-    import unittest
-
-try:
-    # Python 2
-    from StringIO import StringIO
-except ImportError:
-    # Python 3
-    from io import StringIO
-
-try:
-    from unittest import mock
-except ImportError:
-    import mock
-
-if sys.version_info.major == 2:
-    # Python 2
-    import __builtin__ as builtins
-else:
-    # Python 3
-    import builtins
 
 class BaseTestCase(unittest.TestCase):
     def setUp(self):
@@ -38,6 +17,7 @@ class BaseTestCase(unittest.TestCase):
 
 class PseudoTTY(object):
     """Pseudo TTY wrapper around stdin."""
+
     def __init__(self, underlying):
         self.__underlying = underlying
 

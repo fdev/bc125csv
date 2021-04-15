@@ -1,5 +1,8 @@
+from unittest import mock
+import builtins
+
 from bc125csv import main
-from bc125csv.tests.base import BaseTestCase, mock, builtins
+from bc125csv.tests.base import BaseTestCase
 
 
 class ExporterTestCase(BaseTestCase):
@@ -47,9 +50,16 @@ class ExporterTestCase(BaseTestCase):
             main(["export", "-n", "-s", "-o", "output.csv"])
 
         with self.assertRaises(SystemExit) as cm:
-            main(["export", "-n", "-s", "-o", "/path/that/does/not/exist/output.csv"])
+            main(
+                [
+                    "export",
+                    "-n",
+                    "-s",
+                    "-o",
+                    "/path/that/does/not/exist/output.csv",
+                ]
+            )
         self.assertNotEqual(cm.exception.code, None)
-
 
 
 EXPORT = """Channel,Name,Frequency,Modulation,CTCSS/DCS,Delay,Lockout,Priority

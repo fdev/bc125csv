@@ -1,9 +1,11 @@
+from unittest import mock
+import builtins
+
 from bc125csv import main
 from bc125csv.handler import VERSION
 from bc125csv.tests.test_importer import IMPORT, IMPORT_ERRORS
-from bc125csv.tests.base import BaseTestCase, PseudoTTY, StringIO, mock, builtins
+from bc125csv.tests.base import BaseTestCase, PseudoTTY, StringIO
 
-from bc125csv.tests.base import unittest
 
 class HandlerTestCase(BaseTestCase):
     def test_version(self):
@@ -47,7 +49,9 @@ class HandlerTestCase(BaseTestCase):
         Verify csv data from file with errors.
         """
         with mock.patch("os.path.isfile", return_value=True):
-            with mock.patch.object(builtins, 'open', return_value=StringIO(IMPORT_ERRORS)):
+            with mock.patch.object(
+                builtins, "open", return_value=StringIO(IMPORT_ERRORS)
+            ):
                 with self.assertRaises(SystemExit) as cm:
                     main(["verify", "-v", "-i", "import_errors.csv"])
                 self.assertStdOut("")
@@ -59,7 +63,9 @@ class HandlerTestCase(BaseTestCase):
         Verify csv data from file.
         """
         with mock.patch("os.path.isfile", return_value=True):
-            with mock.patch.object(builtins, 'open', return_value=StringIO(IMPORT)):
+            with mock.patch.object(
+                builtins, "open", return_value=StringIO(IMPORT)
+            ):
                 with self.assertRaises(SystemExit) as cm:
                     main(["verify", "-v", "-i", "import.csv"])
                 self.assertStdOut("")
@@ -76,7 +82,6 @@ class HandlerTestCase(BaseTestCase):
             self.assertStdErr("")
             self.assertNotEqual(cm.exception.code, None)
 
-    #@unittest.skipIf(sys.version_info[0] < 3, 'Python 3')
     def test_shell(self):
         """
         Test interactive shell
@@ -86,10 +91,13 @@ class HandlerTestCase(BaseTestCase):
                 main(["shell", "-n"])
             self.assertEqual(cm.exception.code, None)
 
-        with mock.patch("sys.stdin", PseudoTTY(StringIO("PRG\n\nBLT,AO\nEPG"))):
+        with mock.patch(
+            "sys.stdin", PseudoTTY(StringIO("PRG\n\nBLT,AO\nEPG"))
+        ):
             with self.assertRaises(SystemExit) as cm:
                 main(["shell", "-n"])
             self.assertEqual(cm.exception.code, None)
+
 
 ERROR_LINES = """Error on line 5: Invalid name: Wrong chars~~~.
 Error on line 8: Invalid frequency: 100.999x.

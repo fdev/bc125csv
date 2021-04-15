@@ -1,27 +1,28 @@
-from __future__ import print_function
-
 import csv
 
 
-class Exporter(object):
+class Exporter:
     """
     Convert channel objects to CSV data and write to file object.
     """
+
     def __init__(self, fh, sparse=False):
         self.sparse = sparse
         self.csvwriter = csv.writer(fh, lineterminator="\n")
-        
+
         # Write header
-        self.writerow([
-            "Channel",
-            "Name",
-            "Frequency",
-            "Modulation",
-            "CTCSS/DCS",
-            "Delay",
-            "Lockout",
-            "Priority",
-        ])
+        self.writerow(
+            [
+                "Channel",
+                "Name",
+                "Frequency",
+                "Modulation",
+                "CTCSS/DCS",
+                "Delay",
+                "Lockout",
+                "Priority",
+            ]
+        )
 
     def writerow(self, row=None):
         self.csvwriter.writerow(row or [])
@@ -30,7 +31,7 @@ class Exporter(object):
         # Iterate over all banks
         for bank in range(1, 11):
             bankheader = False
-            
+
             for index in range(bank * 50 - 49, bank * 50 + 1):
                 if index not in channels:
                     continue
@@ -60,13 +61,17 @@ class Exporter(object):
                 else:
                     priority = "no"
 
-                self.writerow([
-                    channel.index,
-                    channel.name,
-                    channel.frequency,
-                    channel.modulation,
-                    "" if channel.tqcode == 0 and self.sparse else channel.tq,
-                    channel.delay,
-                    lockout,
-                    priority,
-                ])
+                self.writerow(
+                    [
+                        channel.index,
+                        channel.name,
+                        channel.frequency,
+                        channel.modulation,
+                        ""
+                        if channel.tqcode == 0 and self.sparse
+                        else channel.tq,
+                        channel.delay,
+                        lockout,
+                        priority,
+                    ]
+                )

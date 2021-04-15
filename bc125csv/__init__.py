@@ -1,5 +1,5 @@
 """
-bc125csv - Channel import and export tool for the Uniden BC125AT, UBC125XLT 
+bc125csv - Channel import and export tool for the Uniden BC125AT, UBC125XLT
 and UBC126AT.
 
 Copyright (c) 2020, fdev.nl. All rights reserved.

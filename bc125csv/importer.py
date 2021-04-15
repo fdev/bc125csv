@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import re
 import csv
 import sys
@@ -12,7 +10,7 @@ class ParseError(Exception):
     pass
 
 
-class Importer(object):
+class Importer:
     """
     Convert CSV data read from a fileobject to channel objects.
     """
@@ -53,10 +51,12 @@ class Importer(object):
         if value:
             match = self.RE_FREQ.match(value)
             if match:
-                return ".".join((
-                    match.group(1).lstrip("0"),
-                    (match.group(2) or "")[:5].lstrip(".").ljust(4, "0")
-                ))
+                return ".".join(
+                    (
+                        match.group(1).lstrip("0"),
+                        (match.group(2) or "")[:5].lstrip(".").ljust(4, "0"),
+                    )
+                )
         raise ParseError("Invalid frequency: %s." % value)
 
     def parse_modulation(self, value):
@@ -91,7 +91,7 @@ class Importer(object):
             dcs = match.group(1).zfill(3)
             if dcs in DCS_CODES:
                 return DCS_CODES.index(dcs) + 128
-        
+
         raise ParseError("Invalid CTCSS/DCS: %s." % value)
 
     def parse_delay(self, value):
@@ -111,11 +111,15 @@ class Importer(object):
         """Parses and validates a flag."""
         if value is None:
             return False
+
         flag = value.lower()
+
         if flag in ("0", "no", "false"):
             return False
-        elif flag in ("1", "yes", "true"):
+
+        if flag in ("1", "yes", "true"):
             return True
+
         raise ParseError("Invalid flag: %s." % value)
 
     def parse_priority(self, value):
@@ -136,6 +140,7 @@ class Importer(object):
         """Safe list getter."""
         if len(data) > index and data[index]:
             return data[index]
+        return None
 
     def parse_row(self, row):
         """Parse a csv row to a channel object."""
@@ -199,8 +204,9 @@ class Importer(object):
                 continue
 
             if channel.index in channels:
-                self.print_error(row + 1, "Channel %d was seen before." % \
-                    channel.index)
+                self.print_error(
+                    row + 1, "Channel %d was seen before." % channel.index
+                )
                 errors += 1
                 continue
 
@@ -208,3 +214,5 @@ class Importer(object):
 
         if not errors:
             return channels
+
+        return None

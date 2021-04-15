@@ -1,57 +1,73 @@
-from __future__ import print_function
-from __future__ import division
-
 import re
 import sys
 
 try:
     import pyudev
-except ImportError: # pragma: no cover
-    sys.exit("Failed to import pyudev (https://pyudev.readthedocs.org/):,"
-        " install using:\n  pip install pyudev")
+except ImportError:  # pragma: no cover
+    sys.exit(
+        "Failed to import pyudev (https://pyudev.readthedocs.org/):,"
+        " install using:\n  pip install pyudev"
+    )
 
 try:
     import serial
-except ImportError: # pragma: no cover
-    sys.exit("Failed to import pyserial (http://pyserial.sourceforge.net/),"
-        " install using:\n  pip install pyserial")
+except ImportError:  # pragma: no cover
+    sys.exit(
+        "Failed to import pyserial (http://pyserial.sourceforge.net/),"
+        " install using:\n  pip install pyserial"
+    )
 
+
+# Keep single line formatting of lists.
+# fmt: off
 
 # CTCSS (Continuous Tone-Coded Squelch System) tones
 CTCSS_TONES = [
-    "67.0","69.3","71.9","74.4","77.0","79.7","82.5","85.4","88.5","91.5",
-    "94.8","97.4","100.0","103.5","107.2","110.9","114.8","118.8","123.0",
-    "127.3","131.8","136.5","141.3","146.2","151.4","156.7","159.8","162.2",
-    "165.5","167.9","171.3","173.8","177.3","179.9","183.5","186.2","189.9",
-    "192.8","196.6","199.5","203.5","206.5","210.7","218.1","225.7","229.1",
-    "233.6","241.8","250.3","254.1",
+    "67.0", "69.3", "71.9", "74.4", "77.0", "79.7", "82.5", "85.4",
+    "88.5", "91.5", "94.8", "97.4", "100.0", "103.5", "107.2", "110.9",
+    "114.8", "118.8", "123.0", "127.3", "131.8", "136.5", "141.3", "146.2",
+    "151.4", "156.7", "159.8", "162.2", "165.5", "167.9", "171.3", "173.8",
+    "177.3", "179.9", "183.5", "186.2", "189.9", "192.8", "196.6", "199.5",
+    "203.5", "206.5", "210.7", "218.1", "225.7", "229.1", "233.6", "241.8",
+    "250.3", "254.1",
 ]
 
 # DCS (Digital-Coded Squelch) codes
 DCS_CODES = [
-    "023","025","026","031","032","036","043","047","051","053",
-    "054","065","071","072","073","074","114","115","116","122",
-    "125","131","132","134","143","145","152","155","156","162",
-    "165","172","174","205","212","223","225","226","243","244",
-    "245","246","251","252","255","261","263","265","266","271",
-    "274","306","311","315","325","331","332","343","346","351",
-    "356","364","365","371","411","412","413","423","431","432",
-    "445","446","452","454","455","462","464","465","466","503",
-    "506","516","523","526","532","546","565","606","612","624",
-    "627","631","632","654","662","664","703","712","723","731",
-    "732","734","743","754",
+    "023", "025", "026", "031", "032", "036", "043", "047", "051", "053",
+    "054", "065", "071", "072", "073", "074", "114", "115", "116", "122",
+    "125", "131", "132", "134", "143", "145", "152", "155", "156", "162",
+    "165", "172", "174", "205", "212", "223", "225", "226", "243", "244",
+    "245", "246", "251", "252", "255", "261", "263", "265", "266", "271",
+    "274", "306", "311", "315", "325", "331", "332", "343", "346", "351",
+    "356", "364", "365", "371", "411", "412", "413", "423", "431", "432",
+    "445", "446", "452", "454", "455", "462", "464", "465", "466", "503",
+    "506", "516", "523", "526", "532", "546", "565", "606", "612", "624",
+    "627", "631", "632", "654", "662", "664", "703", "712", "723", "731",
+    "732", "734", "743", "754",
 ]
 
 SUPPORTED_MODELS = ("BC125AT", "UBC125XLT", "UBC126AT")
 
+# fmt: on
 
-class Channel(object):
+
+class Channel:
     """
     Representation of a channel in the scanner.
     """
 
-    def __init__(self, index, name, frequency, modulation="AUTO", tqcode=0, 
-        delay=2, lockout=False, priority=False):
+    def __init__(
+        self,
+        index,
+        name,
+        frequency,
+        modulation="AUTO",
+        tqcode=0,
+        delay=2,
+        lockout=False,
+        priority=False,
+    ):
         self.index = index
         self.name = name
         self.frequency = frequency
@@ -74,6 +90,7 @@ class Channel(object):
             return CTCSS_TONES[self.tqcode - 64] + " Hz"
         if 128 <= self.tqcode <= 231:
             return "DCS " + DCS_CODES[self.tqcode - 128]
+        return ""
 
     @property
     def freqcode(self):
@@ -88,12 +105,13 @@ class ScannerException(Exception):
     pass
 
 
-class Scanner(serial.Serial, object):
+class Scanner(serial.Serial):
     """
     Wrap around Serial to provide compatible readline and helper methods.
     """
-    
-    RE_CIN = re.compile(r"""
+
+    RE_CIN = re.compile(
+        r"""
         # CIN,[INDEX],[NAME],[FRQ],[MOD],[CTCSS/DCS],[DLY],[LOUT],[PRI]
         ^ # No characters before
         CIN,
@@ -106,12 +124,14 @@ class Scanner(serial.Serial, object):
         (?P<lockout>0|1),
         (?P<priority>0|1) # no comma!
         $ # No characters after
-        """, flags=re.VERBOSE)
+        """,
+        flags=re.VERBOSE,
+    )
 
-    def __init__(self, port, baudrate=9600): # pragma: no cover
+    def __init__(self, port, baudrate=9600):  # pragma: no cover
         super(Scanner, self).__init__(port=port, baudrate=baudrate)
 
-    def writeread(self, command): # pragma: no cover
+    def writeread(self, command):  # pragma: no cover
         self.write((command + "\r").encode())
         self.flush()
         return self.readlinecr()
@@ -120,8 +140,9 @@ class Scanner(serial.Serial, object):
         result = self.writeread(command)
         if not re.match(r"(^ERR|,NG$)", result):
             return result
+        return None
 
-    def readlinecr(self): # pragma: no cover
+    def readlinecr(self):  # pragma: no cover
         """
         The Serial class might be based on serial.FileLike, which allows
         one to override the eol character, and io.RawIOBase, which doesn't.
@@ -157,55 +178,67 @@ class Scanner(serial.Serial, object):
 
         # Error occurred
         if not result:
-            raise ScannerException("Could not read channel %d." %  index)
+            raise ScannerException("Could not read channel %d." % index)
 
         # Try to match result
         match = self.RE_CIN.match(result)
         if not match:
-            raise ScannerException("Unexpected data for channel %d." %  index)
+            raise ScannerException("Unexpected data for channel %d." % index)
         data = match.groupdict()
 
         # Return on empty channel
         if data["freq"] == "00000000":
-            return
+            return None
 
         # Convert 1290000 to 129.0000
-        frequency = "%s.%s" % (data["freq"][:-4].lstrip("0"), data["freq"][-4:])
+        frequency = "%s.%s" % (
+            data["freq"][:-4].lstrip("0"),
+            data["freq"][-4:],
+        )
 
-        return Channel(**{
-            "index":      int(data["index"]),
-            "name":       data["name"].strip(),
-            "frequency":  frequency,
-            "modulation": data["modulation"],
-            "tqcode":     int(data["tq"]),
-            "delay":      int(data["delay"]),
-            "lockout":    data["lockout"] == "1",
-            "priority":   data["priority"] == "1",
-        })
+        return Channel(
+            **{
+                "index": int(data["index"]),
+                "name": data["name"].strip(),
+                "frequency": frequency,
+                "modulation": data["modulation"],
+                "tqcode": int(data["tq"]),
+                "delay": int(data["delay"]),
+                "lockout": data["lockout"] == "1",
+                "priority": data["priority"] == "1",
+            }
+        )
 
     def set_channel(self, channel):
         """Write channel object to scanner."""
-        command = ",".join(map(str, [
-            "CIN",
-            channel.index,
-            channel.name,
-            channel.freqcode,
-            channel.modulation,
-            channel.tqcode,
-            channel.delay,
-            int(channel.lockout),
-            int(channel.priority),
-        ]))
+        command = ",".join(
+            map(
+                str,
+                [
+                    "CIN",
+                    channel.index,
+                    channel.name,
+                    channel.freqcode,
+                    channel.modulation,
+                    channel.tqcode,
+                    channel.delay,
+                    int(channel.lockout),
+                    int(channel.priority),
+                ],
+            )
+        )
 
         # Write to scanner
         result = self.send(command)
         if not result or result != "CIN,OK":
-            raise ScannerException("Could not write to channel %d." % channel.index)
+            raise ScannerException(
+                "Could not write to channel %d." % channel.index
+            )
 
     def delete_channel(self, index):
         """Delete channel from scanner."""
         channel = self.get_channel(index)
-        
+
         # Only delete if channel has data
         # Unnecessary deletes are slow
         if channel:
@@ -218,6 +251,7 @@ class VirtualScanner(Scanner):
     """
     Virtual scanner to test without an actual scanner.
     """
+
     def __init__(self, *args, **kwargs):
         # Don"t create a Serial object
         pass
@@ -242,8 +276,10 @@ class VirtualScanner(Scanner):
             index = int(command[4:])
             lockout = index == 55
             priority = index == 15
-            return "CIN,{0},Channel {0},1{0:02d}0000,FM,0,2,{1:d},{2:d}" \
-                .format(index, lockout, priority)
+            return "CIN,{0},Channel {0},1{0:02d}0000,FM,0,2,{1:d},{2:d}".format(
+                index, lockout, priority
+            )
+
         elif re.match(r"^CIN,[0-9]+$", command):
             index = int(command[4:])
             tq = (0, 127, 240, 145)[index % 4]
@@ -261,7 +297,7 @@ class VirtualScanner(Scanner):
         return "ERR"
 
 
-class DeviceLookup(object): # pragma: no cover
+class DeviceLookup:  # pragma: no cover
     """
     Scan USB devices and look for a compatible scanner.
     """
@@ -271,8 +307,10 @@ class DeviceLookup(object): # pragma: no cover
 
     def is_scanner(self, device):
         """Given USB device is a compatible scanner."""
-        return device.get("ID_VENDOR_ID") == "1965" and \
-            device.get("ID_MODEL") in SUPPORTED_MODELS
+        return (
+            device.get("ID_VENDOR_ID") == "1965"
+            and device.get("ID_MODEL") in SUPPORTED_MODELS
+        )
 
     def is_tty(self, device):
         """Given USB device is a serial tty."""
@@ -293,3 +331,5 @@ class DeviceLookup(object): # pragma: no cover
         for device in self.context.list_devices():
             if self.is_scanner(device):
                 return device
+
+        return None

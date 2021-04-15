@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import os
 import sys
 import argparse
@@ -7,7 +5,7 @@ import argparse
 from bc125csv.scanner import (
     DeviceLookup,
     Scanner,
-    ScannerException, 
+    ScannerException,
     SUPPORTED_MODELS,
     VirtualScanner,
 )
@@ -15,13 +13,15 @@ from bc125csv.importer import Importer
 from bc125csv.exporter import Exporter
 
 VERSION = "bc125csv version 1.0.2 Released Apr 24, 2020"
-USAGE = VERSION + """
+USAGE = (
+    VERSION
+    + """
 
 Copyright (c) 2020, fdev.nl. All rights reserved.
 Released under the MIT license.
 
-Uniden and Bearcat are registered trademarks of Uniden 
-America Corporation. This application and its author 
+Uniden and Bearcat are registered trademarks of Uniden
+America Corporation. This application and its author
 are not affiliated with or endorsed by Uniden in any way.
 
 Usage: %%(prog)s ACTION [OPTIONS]
@@ -50,15 +50,19 @@ Compatible scanners: %(models)s
 Disclaimer: While thoroughly tested, this software comes
 with absolutely no warranty. Use at your own risk.
 
-""" % dict(models=", ".join(SUPPORTED_MODELS))
+"""
+    % dict(models=", ".join(SUPPORTED_MODELS))
+)
 
-HELP = USAGE + """
+HELP = (
+    USAGE
+    + """
 EXPORT FORMAT
 
 The export format is a comma separated values file with header,
 comments and empty lines to improve readability. Empty channels
-are omitted by default, but can be included using the --include-empty 
-option. Any 'no' and 'none' values in the CTCSS/DCS, Lockout and 
+are omitted by default, but can be included using the --include-empty
+option. Any 'no' and 'none' values in the CTCSS/DCS, Lockout and
 Priority columns can be omitted by using the --sparse option.
 
 Channel,Name,Frequency,Modulation,CTCSS/DCS,Delay,Lockout,Priority
@@ -83,7 +87,7 @@ The import format is the same as the export format, but forgiving:
  * yes, true and 1 may be used interchangeably,
  * CTCSS tones may be written as 114.8, 114.8Hz, CTCSS 114.8 Hz, etc,
  * DCS codes may be written as 26, 026, DCS026, DCS 026,
- * lines beginning with a '#' (comment line) or ',' (no channel) and 
+ * lines beginning with a '#' (comment line) or ',' (no channel) and
    the first line (containing the header) are ignored,
  * additional columns are ignored,
  * frequencies are automatically rounded down to 4 decimal places.
@@ -119,18 +123,19 @@ Verify a csv file:
 Enable backlight using the shell:
 echo -en "PRG\\nBLT,AO\\nEPG" | %(prog)s shell
 """
+)
 
 
-class Handler(object):
+class Handler:
     """
     Handle a command call.
 
     Arguments are taken from sys.stdin unless a list of arguments is given.
     """
+
     def __init__(self, args=None):
         self.parser = self.create_parser()
         self.params = self.parser.parse_args(args)
-
 
     def create_parser(self):
         """Create an argument parser."""
@@ -142,51 +147,63 @@ class Handler(object):
 
         # Parse arguments passed by user
         parser = argparse.ArgumentParser(formatter_class=Usage)
-        parser.add_argument("command", nargs="?", 
-            choices=("verify", "import", "export", "shell", "help"))
-        parser.add_argument("-b", "--banks", type=int, dest="banks", nargs="+",
-            choices=range(1,11), default=range(1,11))
-        parser.add_argument("-e", "--include-empty", action="store_true", 
-            dest="empty")
+        parser.add_argument(
+            "command",
+            nargs="?",
+            choices=("verify", "import", "export", "shell", "help"),
+        )
+        parser.add_argument(
+            "-b",
+            "--banks",
+            type=int,
+            dest="banks",
+            nargs="+",
+            choices=range(1, 11),
+            default=range(1, 11),
+        )
+        parser.add_argument(
+            "-e", "--include-empty", action="store_true", dest="empty"
+        )
         parser.add_argument("-i", "--input", dest="input")
-        parser.add_argument("-n", "--no-scanner", action="store_true", 
-            dest="noscanner")
+        parser.add_argument(
+            "-n", "--no-scanner", action="store_true", dest="noscanner"
+        )
         parser.add_argument("-o", "--output", dest="output")
-        parser.add_argument("-r", "--rate", type=int, dest="rate",
-            choices=(4800, 9600, 19200, 38400, 57600, 115200), default=9600)
-        parser.add_argument("-s", "--sparse", action="store_true", 
-            dest="sparse")
-        parser.add_argument("-v", "--verbose", action="store_true", 
-            dest="verbose")
-        parser.add_argument("-V", "--version", action="store_true", 
-            dest="version")
+        parser.add_argument(
+            "-r",
+            "--rate",
+            type=int,
+            dest="rate",
+            choices=(4800, 9600, 19200, 38400, 57600, 115200),
+            default=9600,
+        )
+        parser.add_argument(
+            "-s", "--sparse", action="store_true", dest="sparse"
+        )
+        parser.add_argument(
+            "-v", "--verbose", action="store_true", dest="verbose"
+        )
+        parser.add_argument(
+            "-V", "--version", action="store_true", dest="version"
+        )
 
         return parser
 
-
     def handle(self):
         if self.params.version:
-            return self.print_version()
-        
-        # No command given
-        if not self.params.command:
-            return self.print_usage()
-
-        if self.params.command == "help":
-            return self.command_help()
-
-        if self.params.command == "verify":
-            return self.command_verify()
-        
-        if self.params.command == "shell":
-            return self.command_shell()
-        
-        if self.params.command == "import":
-            return self.command_import()
-
-        if self.params.command == "export":
-            return self.command_export()
-
+            self.print_version()
+        elif self.params.command == "help":
+            self.command_help()
+        elif self.params.command == "verify":
+            self.command_verify()
+        elif self.params.command == "shell":
+            self.command_shell()
+        elif self.params.command == "import":
+            self.command_import()
+        elif self.params.command == "export":
+            self.command_export()
+        else:
+            self.print_usage()
 
     def get_scanner(self):
         # Virtual scanner requested
@@ -194,38 +211,41 @@ class Handler(object):
             self.print_verbose("Using virtual scanner device.")
             return VirtualScanner()
 
-        else: # pragma: no cover
-            # Look for a compatible device
-            self.print_verbose("Searching for compatible devices...")
+        # Look for a compatible device
+        self.print_verbose("Searching for compatible devices...")
 
-            lookup = DeviceLookup()
-            device = lookup.get_device()
+        lookup = DeviceLookup()
+        device = lookup.get_device()
 
-            if not device:
-                sys.exit("No compatible scanner was found.")
+        if not device:
+            sys.exit("No compatible scanner was found.")
 
-            if not lookup.is_tty(device):
-                sys.exit("Found a compatible scanner, but no serial tty.\n"
-                    "Please run the following commands with root privileges:\n"
-                    "modprobe usbserial vendor=0x{0} product=0x{1}"
-                    .format(device.get("ID_VENDOR_ID"), device.get("ID_MODEL_ID")))
+        if not lookup.is_tty(device):
+            sys.exit(
+                "Found a compatible scanner, but no serial tty.\n"
+                "Please run the following commands with root privileges:\n"
+                "modprobe usbserial vendor=0x{0} product=0x{1}".format(
+                    device.get("ID_VENDOR_ID"), device.get("ID_MODEL_ID")
+                )
+            )
 
-            # Make sure device is writable by current user
-            if not os.access(device.get("DEVNAME", ""), os.W_OK):
-                sys.exit("Found a compatible scanner, but can not write to it.")
+        # Make sure device is writable by current user
+        if not os.access(device.get("DEVNAME", ""), os.W_OK):
+            sys.exit("Found a compatible scanner, but can not write to it.")
 
-            scanner = Scanner(device.get("DEVNAME"), self.params.rate)
+        scanner = Scanner(device.get("DEVNAME"), self.params.rate)
 
-            try:
-                model = scanner.get_model()
-            except ScannerException:
-                sys.exit("Could not get model name from scanner.\n" 
-                    "Please try again or reconnect your device.")
+        try:
+            model = scanner.get_model()
+        except ScannerException:
+            sys.exit(
+                "Could not get model name from scanner.\n"
+                "Please try again or reconnect your device."
+            )
 
-            self.print_verbose("Found scanner", model)
+        self.print_verbose("Found scanner", model)
 
-            return scanner
-
+        return scanner
 
     def get_input_handle(self):
         # Read from file instead of stdin
@@ -234,7 +254,6 @@ class Handler(object):
                 sys.exit("Input file does not exist.")
             return open(self.params.input, "r")
         return sys.stdin
-
 
     def get_output_handle(self):
         # Write to file instead of stdout
@@ -245,30 +264,25 @@ class Handler(object):
                 sys.exit("Could not open output file for writing.")
         return sys.stdout
 
-
     def print_verbose(self, *args):
         """Helper function: only print with raised verbosity level."""
         if self.params.verbose:
             print(*args, file=sys.stderr)
-
 
     def print_version(self):
         """Output application version."""
         print(VERSION)
         sys.exit()
 
-
     def print_usage(self):
         """Output command usage."""
         self.parser.print_usage()
         sys.exit()
 
-
     def command_help(self):
         """Output detailed help."""
         print(HELP % dict(prog=self.parser.prog))
         sys.exit()
-
 
     def command_verify(self):
         fh = self.get_input_handle()
@@ -281,13 +295,14 @@ class Handler(object):
         self.print_verbose("No errors found.")
         sys.exit()
 
-
     def command_shell(self):
         scanner = self.get_scanner()
 
         if isinstance(scanner, VirtualScanner):
-            print("Not all commands are emulated by the virtual scanner device.", 
-                file=sys.stderr)
+            print(
+                "Not all commands are emulated by the virtual scanner device.",
+                file=sys.stderr,
+            )
 
         # Commands piped into shell
         if not sys.stdin.isatty():
@@ -301,22 +316,16 @@ class Handler(object):
 
         # Enter interactive shell
         self.print_verbose("Starting interactive shell")
-        get_input = input
-
-        # Use raw_input() in Python 2
-        if sys.version_info.major == 2: # pragma: no cover
-            get_input = raw_input
 
         while True:
             try:
-                cmd = get_input("> ")
+                cmd = input("> ")
             except (EOFError, KeyboardInterrupt):
                 break
             print("<", scanner.writeread(cmd))
 
         print("")
         sys.exit()
-
 
     def command_import(self):
         scanner = self.get_scanner()
@@ -328,15 +337,18 @@ class Handler(object):
         if channels is None:
             sys.exit("\nThere are errors in your csv data.")
 
-        if scanner.get_model() == "UBC125XLT": # pragma: no cover
-            if any(channel.modulation == "NFM" for channel in channels.values()):
+        if scanner.get_model() == "UBC125XLT":  # pragma: no cover
+            if any(
+                channel.modulation == "NFM" for channel in channels.values()
+            ):
                 sys.exit("NFM modulation is not supported on your device.")
 
         self.print_verbose("Entering programming mode")
         scanner.enter_programming()
 
-        self.print_verbose("Importing into banks:", 
-            " ".join(map(str, self.params.banks)))
+        self.print_verbose(
+            "Importing into banks:", " ".join(map(str, self.params.banks))
+        )
 
         for bank in self.params.banks:
             for index in range(bank * 50 - 49, bank * 50 + 1):
@@ -351,7 +363,6 @@ class Handler(object):
         self.print_verbose("Leaving programming mode")
         scanner.exit_programming()
 
-
     def command_export(self):
         scanner = self.get_scanner()
         fh = self.get_output_handle()
@@ -359,8 +370,9 @@ class Handler(object):
         self.print_verbose("Entering programming mode")
         scanner.enter_programming()
 
-        self.print_verbose("Exporting banks:", 
-            " ".join(map(str, self.params.banks)))
+        self.print_verbose(
+            "Exporting banks:", " ".join(map(str, self.params.banks))
+        )
 
         # Get channels from device
         channels = {}
@@ -377,7 +389,6 @@ class Handler(object):
 
         exporter = Exporter(fh, self.params.sparse)
         exporter.write(channels)
-
 
 
 def main(args=None):

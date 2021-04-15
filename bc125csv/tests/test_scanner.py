@@ -1,47 +1,55 @@
-from bc125csv import main
 from bc125csv.scanner import Channel, VirtualScanner, ScannerException
-from bc125csv.tests.base import BaseTestCase, mock
+from bc125csv.tests.base import BaseTestCase
+
 
 class NonRespondingScanner(VirtualScanner):
     def writeread(self, command):
         return ""
 
+
 class ErrorRespondingScanner(VirtualScanner):
     def writeread(self, command):
         return "ERR"
+
 
 class GarbageRespondingScanner(VirtualScanner):
     def writeread(self, command):
         return "GUVFFPNAAREVFZVFORUNIVAT"
 
+
 class EnsureChannelDelete:
     def get_channel(self, index):
-        return Channel(**{
-            "index": 1,
-            "name": "Channel name",
-            "frequency": "100.1234",
-            "modulation": "FM",
-            "tqcode": 0,
-            "delay": 2,
-            "lockout": False,
-            "priority": False,
-        })
+        return Channel(
+            **{
+                "index": index,
+                "name": "Channel name",
+                "frequency": "100.1234",
+                "modulation": "FM",
+                "tqcode": 0,
+                "delay": 2,
+                "lockout": False,
+                "priority": False,
+            }
+        )
+
 
 class ScannerTestCase(BaseTestCase):
     def test_channel(self):
         """
         Normal import into bank 1.
         """
-        ch = Channel(**{
-            "index": 1,
-            "name": "Channel name",
-            "frequency": "100.1234",
-            "modulation": "FM",
-            "tqcode": 0,
-            "delay": 2,
-            "lockout": False,
-            "priority": False,
-        })
+        ch = Channel(
+            **{
+                "index": 1,
+                "name": "Channel name",
+                "frequency": "100.1234",
+                "modulation": "FM",
+                "tqcode": 0,
+                "delay": 2,
+                "lockout": False,
+                "priority": False,
+            }
+        )
         self.assertEqual(str(ch), "CH001: 100.1234 FM")
         self.assertEqual(ch.freqcode, "01001234")
         self.assertEqual(ch.tq, "none")
@@ -128,16 +136,18 @@ class ScannerTestCase(BaseTestCase):
             channel = scanner.get_channel(1)
 
     def test_channel_set(self):
-        ch = Channel(**{
-            "index": 1,
-            "name": "Channel name",
-            "frequency": "100.1234",
-            "modulation": "FM",
-            "tqcode": 0,
-            "delay": 2,
-            "lockout": False,
-            "priority": False,
-        })
+        ch = Channel(
+            **{
+                "index": 1,
+                "name": "Channel name",
+                "frequency": "100.1234",
+                "modulation": "FM",
+                "tqcode": 0,
+                "delay": 2,
+                "lockout": False,
+                "priority": False,
+            }
+        )
 
         scanner = VirtualScanner()
         scanner.set_channel(ch)
@@ -172,7 +182,9 @@ class ScannerTestCase(BaseTestCase):
             scanner = ErrorRespondingDelete()
             scanner.delete_channel(1)
 
-        class GarbageRespondingDelete(EnsureChannelDelete, NonRespondingScanner):
+        class GarbageRespondingDelete(
+            EnsureChannelDelete, NonRespondingScanner
+        ):
             pass
 
         with self.assertRaises(ScannerException):
