@@ -69,7 +69,7 @@ Usage: bc125csv ACTION [OPTIONS]
 -i, --input FILE     Read from file when importing.
 -n, --no-scanner     Use a virtual scanner device.
 -o, --output FILE    Write to file when exporting.
--r, --rate           Baud rate (default 9600).
+-r, --rate           Baud rate.
 -s, --sparse         Omit 'no' and 'none' values in export.
 -v, --verbose        Be more verbose.
 -V, --version        Output version information and exit.

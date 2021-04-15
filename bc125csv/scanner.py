@@ -120,7 +120,7 @@ class Scanner(serial.Serial):
         flags=re.VERBOSE,
     )
 
-    def __init__(self, port, baudrate=9600):
+    def __init__(self, port, baudrate):
         super(Scanner, self).__init__(port=port, baudrate=baudrate)
 
     def writeread(self, command):
