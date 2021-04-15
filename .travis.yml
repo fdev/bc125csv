@@ -1,14 +1,14 @@
 language: python
 python:
-# Just these versions for now
-  - "2.7"
-  - "3.4"
+  - "3.6"
   - "3.7"
+  - "3.8"
+  - "3.9"
 install:
   - python setup.py install
-# Install coverage for nosetests
+  # Install coverage for nosetests
   - pip install coverage
 script:
-# pytest, nose and mock are pre-installed on travis-ci
-# http://docs.travis-ci.com/user/languages/python/#Pre-installed-packages
+  # pytest, nose and mock are pre-installed on travis-ci
+  # http://docs.travis-ci.com/user/languages/python/#Pre-installed-packages
   - nosetests --with-coverage --cover-package=bc125csv

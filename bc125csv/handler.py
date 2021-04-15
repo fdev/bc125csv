@@ -2,22 +2,16 @@ import os
 import sys
 import argparse
 
-from bc125csv.scanner import (
-    DeviceLookup,
-    Scanner,
-    ScannerException,
-    SUPPORTED_MODELS,
-    VirtualScanner,
-)
+from bc125csv.scanner import Device, Scanner, ScannerException, VirtualScanner
 from bc125csv.importer import Importer
 from bc125csv.exporter import Exporter
 
-VERSION = "bc125csv version 1.0.2 Released Apr 24, 2020"
+VERSION = "bc125csv version 1.1.0 Released Apr 15, 2021"
 USAGE = (
     VERSION
     + """
 
-Copyright (c) 2020, fdev.nl. All rights reserved.
+Copyright (c) 2021, fdev.nl. All rights reserved.
 Released under the MIT license.
 
 Uniden and Bearcat are registered trademarks of Uniden
@@ -45,13 +39,12 @@ Available actions are:
   shell   - Start an interactive shell with the device.
   help    - Display detailed help.
 
-Compatible scanners: %(models)s
+Compatible scanners: BC125AT, UBC125XLT, UBC126AT and SR30C.
 
 Disclaimer: While thoroughly tested, this software comes
 with absolutely no warranty. Use at your own risk.
 
 """
-    % dict(models=", ".join(SUPPORTED_MODELS))
 )
 
 HELP = (
@@ -175,7 +168,6 @@ class Handler:
             type=int,
             dest="rate",
             choices=(4800, 9600, 19200, 38400, 57600, 115200),
-            default=9600,
         )
         parser.add_argument(
             "-s", "--sparse", action="store_true", dest="sparse"
@@ -213,27 +205,16 @@ class Handler:
 
         # Look for a compatible device
         self.print_verbose("Searching for compatible devices...")
-
-        lookup = DeviceLookup()
-        device = lookup.get_device()
+        device = Device.lookup()
 
         if not device:
             sys.exit("No compatible scanner was found.")
 
-        if not lookup.is_tty(device):
-            sys.exit(
-                "Found a compatible scanner, but no serial tty.\n"
-                "Please run the following commands with root privileges:\n"
-                "modprobe usbserial vendor=0x{0} product=0x{1}".format(
-                    device.get("ID_VENDOR_ID"), device.get("ID_MODEL_ID")
-                )
-            )
-
         # Make sure device is writable by current user
-        if not os.access(device.get("DEVNAME", ""), os.W_OK):
+        if not os.access(device.path, os.W_OK):
             sys.exit("Found a compatible scanner, but can not write to it.")
 
-        scanner = Scanner(device.get("DEVNAME"), self.params.rate)
+        scanner = Scanner(device.path, self.params.rate or device.baudrate)
 
         try:
             model = scanner.get_model()
@@ -337,7 +318,7 @@ class Handler:
         if channels is None:
             sys.exit("\nThere are errors in your csv data.")
 
-        if scanner.get_model() == "UBC125XLT":  # pragma: no cover
+        if scanner.get_model() == "UBC125XLT":
             if any(
                 channel.modulation == "NFM" for channel in channels.values()
             ):

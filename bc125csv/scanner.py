@@ -2,16 +2,9 @@ import re
 import sys
 
 try:
-    import pyudev
-except ImportError:  # pragma: no cover
-    sys.exit(
-        "Failed to import pyudev (https://pyudev.readthedocs.org/):,"
-        " install using:\n  pip install pyudev"
-    )
-
-try:
     import serial
-except ImportError:  # pragma: no cover
+    from serial.tools.list_ports import comports
+except ImportError:
     sys.exit(
         "Failed to import pyserial (http://pyserial.sourceforge.net/),"
         " install using:\n  pip install pyserial"
@@ -47,8 +40,7 @@ DCS_CODES = [
     "732", "734", "743", "754",
 ]
 
-SUPPORTED_MODELS = ("BC125AT", "UBC125XLT", "UBC126AT")
-
+# Restore formatting.
 # fmt: on
 
 
@@ -118,8 +110,8 @@ class Scanner(serial.Serial):
         (?P<index>\d{1,3}),
         (?P<name>[^,]{0,16}),
         (?P<freq>\d{5,8}), # 4 decimals, so at least 5 digits
-        (?P<modulation>AUTO|AM|FM|NFM),
-        (?P<tq>\d{1,3}),
+        (?P<modulation>|AUTO|AM|FM|NFM), # can be empty for SR30C
+        (?P<tq>\d{0,3}), # can be empty for SR30C
         (?P<delay>-10|-5|0|1|2|3|4|5),
         (?P<lockout>0|1),
         (?P<priority>0|1) # no comma!
@@ -128,10 +120,10 @@ class Scanner(serial.Serial):
         flags=re.VERBOSE,
     )
 
-    def __init__(self, port, baudrate=9600):  # pragma: no cover
+    def __init__(self, port, baudrate=9600):
         super(Scanner, self).__init__(port=port, baudrate=baudrate)
 
-    def writeread(self, command):  # pragma: no cover
+    def writeread(self, command):
         self.write((command + "\r").encode())
         self.flush()
         return self.readlinecr()
@@ -142,7 +134,7 @@ class Scanner(serial.Serial):
             return result
         return None
 
-    def readlinecr(self):  # pragma: no cover
+    def readlinecr(self):
         """
         The Serial class might be based on serial.FileLike, which allows
         one to override the eol character, and io.RawIOBase, which doesn't.
@@ -201,8 +193,10 @@ class Scanner(serial.Serial):
                 "index": int(data["index"]),
                 "name": data["name"].strip(),
                 "frequency": frequency,
-                "modulation": data["modulation"],
-                "tqcode": int(data["tq"]),
+                # Default to "AUTO" for empty values returned by SR30C.
+                "modulation": data["modulation"] or "AUTO",
+                # Default to "0" for empty values returned by SR30C.
+                "tqcode": int(data["tq"] or "0"),
                 "delay": int(data["delay"]),
                 "lockout": data["lockout"] == "1",
                 "priority": data["priority"] == "1",
@@ -297,39 +291,31 @@ class VirtualScanner(Scanner):
         return "ERR"
 
 
-class DeviceLookup:  # pragma: no cover
+class Device:
     """
-    Scan USB devices and look for a compatible scanner.
+    Detected serial USB device.
     """
 
-    def __init__(self):
-        self.context = pyudev.Context()
+    def __init__(self, path, baudrate):
+        self.path = path
+        self.baudrate = baudrate
 
-    def is_scanner(self, device):
-        """Given USB device is a compatible scanner."""
-        return (
-            device.get("ID_VENDOR_ID") == "1965"
-            and device.get("ID_MODEL") in SUPPORTED_MODELS
-        )
+    @staticmethod
+    def lookup():
+        """Find compatible scanner and return Device instance."""
+        ports = comports(include_links=False)
 
-    def is_tty(self, device):
-        """Given USB device is a serial tty."""
-        return device.get("SUBSYSTEM") == "tty"
+        for port in ports:
+            # Uniden vendor
+            if port.vid == 6501 and port.product in (
+                "BC125AT",
+                "UBC125XLT",
+                "UBC126AT",
+            ):
+                return Device(path=port.device, baudrate=9600)
 
-    def get_device(self):
-        """Find compatible scanner and return usb device.
-
-        If found a tty device will be returned, otherwise the
-        usb device will be returned.
-        """
-        # Look for scanner tty
-        for device in self.context.list_devices():
-            if self.is_scanner(device) and self.is_tty(device):
-                return device
-
-        # No scanner with tty, look for scanner
-        for device in self.context.list_devices():
-            if self.is_scanner(device):
-                return device
+            # Silicon Laboratories vendor (SR30C uses this chipset)
+            if port.vid == 4292 and port.pid == 60000:
+                return Device(path=port.device, baudrate=57600)
 
         return None

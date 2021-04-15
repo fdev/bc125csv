@@ -15,7 +15,7 @@ except ImportError:
 
 setup(
     name="bc125csv",
-    version="1.0.2",
+    version="1.1.0",
     url="http://github.com/fdev/bc125csv/",
     download_url="http://github.com/fdev/bc125csv/tarball/master",
     license="MIT",
@@ -24,6 +24,7 @@ setup(
     author="Folkert de Vries",
     author_email="bc125csv@fdev.nl",
     packages=["bc125csv"],
+    # pySerial list_ports returns ListPortInfo instead of tuple since 3.0.
     install_requires=["pyserial>=3"],
     python_requires=">=3.6",
     entry_points={"console_scripts": ["bc125csv=bc125csv:main"]},

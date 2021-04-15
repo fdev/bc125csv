@@ -1,10 +1,9 @@
 # bc125csv
 
-Channel import and export tool for the Uniden BC125AT, UBC125XLT and UBC126AT.
+Channel import and export tool for the Uniden BC125AT, UBC125XLT, UBC126AT and SR30C.
 
 [![Build Status](https://travis-ci.org/fdev/bc125csv.svg)](https://travis-ci.org/fdev/bc125csv)
 [![Code Climate](https://codeclimate.com/github/fdev/bc125csv/badges/gpa.svg)](https://codeclimate.com/github/fdev/bc125csv)
-[![Code Health](https://landscape.io/github/fdev/bc125csv/master/landscape.svg?style=flat)](https://landscape.io/github/fdev/bc125csv/master)
 
 ## Introduction
 
@@ -23,10 +22,7 @@ the command-line, the shell action will allow you to do so (see [Examples](#exam
 ## Requirements
 
 - Python 3.6+
-- [pyudev](https://pyudev.readthedocs.org/)
 - [pySerial](http://pyserial.sourceforge.net/)
-
-Both pyudev and pySerial will be automatically installed on installation.
 
 You can use this application without a connected scanner by enabling the virtual
 scanner device using the `--no-scanner` option.
@@ -50,8 +46,8 @@ pip install git+http://github.com/fdev/bc125csv
 
 ## Tests
 
-This application aims to cover 100% of its code with tests, though some
-parts that require a physical device to be attached are skipped.
+This application aims to cover most of its code with tests, though some
+parts that require a physical device to be attached are not covered.
 
 To run the tests, you can run the following command:
 
@@ -175,12 +171,47 @@ include a carriage return yourself.
 
 ## Compatibility
 
-This application is compatible with the Uniden Bearcat models BC125AT, UBC125XLT
-and UBC126AT.
+This application is compatible with the Uniden Bearcat models BC125AT, UBC125XLT,
+UBC126AT, and SR30C.
+
+### No compatible scanner was found
+
+Because this application only looks for serial devices, any compatible scanner
+that does not have an available serial tty will not be detected. To enable the
+serial tty for a connected device you can try the following:
+
+1. Run `sudo lsusb` and look for a device labeled "Uniden Corporation".
+2. Note the vendor id and product id after `ID`; two four-character hexadecimal numbers separated by a colon.
+3. Run `sudo modprobe usbserial vendor=0x<VENDOR_ID> product=0x<PRODUCT_ID>`.
+
+For example:
+
+```
+# sudo lsusb
+Bus 002 Device 002: ID 8087:8000 Intel Corp.
+Bus 002 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 004 Device 002: ID 0451:8340 Texas Instruments, Inc.
+Bus 003 Device 011: ID 1965:0018 Uniden Corporation
+Bus 003 Device 008: ID 0451:82ff Texas Instruments, Inc.
+# sudo modprobe usbserial vendor=0x1965 product=0x0018
+```
+
+### SR30C driver
+
+The SR30C uses a stock UART serial USB chipset (specifically, the CP2104).
+Linux kernel v2.6.12+ appears to have the driver, but in older kernels or other
+operating systems it may be necessary to install [drivers from the manufacturer][sr30c].
+
+## Issues
+
+sys.exit("Found a compatible scanner, but no serial tty.\n"
+"Please run the following commands with root privileges:\n"
+"modprobe usbserial vendor=0x{0} product=0x{1}"
+.format(device.get("ID_VENDOR_ID"), device.get("ID_MODEL_ID")))
 
 ## License (MIT)
 
-Copyright (c) 2020, Folkert de Vries <bc125csv@fdev.nl>
+Copyright (c) 2021, Folkert de Vries <bc125csv@fdev.nl>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -207,3 +238,4 @@ This application and its author are not affiliated with or endorsed by Uniden
 in any way.
 
 [proto]: http://info.uniden.com/twiki/pub/UnidenMan4/BC125AT/BC125AT_Protocol.pdf
+[sr30c]: https://www.silabs.com/products/development-tools/software/usb-to-uart-bridge-vcp-drivers
